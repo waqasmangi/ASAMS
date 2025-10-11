@@ -1,27 +1,22 @@
 // js/firebase_config.js
 
-// 1. Core Firebase SDK imports (MUST be included in the HTML file first)
-/*
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-*/
-
-// 2. Your Firebase Project Configuration
+// 1. Firebase Project Configuration for ASAMS-A539A
 const firebaseConfig = {
-    apiKey: "AIzaSyBxgOhd3y5L7Xl_IzWkuJ02PBlswR9lt5k",
-    authDomain: "nirmal-library.firebaseapp.com",
-    projectId: "nirmal-library",
-    storageBucket: "nirmal-library.firebasestorage.app",
-    messagingSenderId: "157338670869",
-    appId: "1:157338670869:web:b7c3d4594bc0185edcfb1c",
-    measurementId: "G-WLD8D9Z0HM"
+    apiKey: "AIzaSyASYEyIgxmKLoSKUwgx9IxDtPwuDR69wso",
+    authDomain: "asams-a539a.firebaseapp.com",
+    projectId: "asams-a539a", 
+    storageBucket: "asams-a539a.firebasestorage.app",
+    messagingSenderId: "518908788173",
+    appId: "1:518908788173:web:0706014508b8f774391884",
+    measurementId: "G-XR730JWN20"
 };
 
-// 3. Initialize Firebase
+// 2. Initialize Firebase and get references to core services
+// NOTE: Firebase SDKs must be loaded via <script> tags in the HTML body.
 const app = firebase.initializeApp(firebaseConfig);
 
-// 4. Get References to Services
+// THESE ARE THE GLOBAL OBJECTS USED THROUGHOUT THE APP:
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage(); // For storing Saloon Logos later
+const storage = firebase.storage();
+const functions = firebase.functions(); // Reference for calling Cloud Functions
