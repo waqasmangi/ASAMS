@@ -5,45 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASAMS - Master Admin Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Firebase Functions required for callable functions -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/master_admin.js"></script>
 </head>
-<body>
-    <div class="dashboard-container">
-        <h1>Master Admin Panel - ASAMS</h1>
-        <button onclick="logout()">Logout</button>
-        
-        <section id="onboarding-section">
-            <h2>1. Onboard New Saloon Vendor (15-Day Free Trial)</h2>
-            <form id="create-saloon-form">
-                <input type="text" id="saloon-name" placeholder="Saloon Name" required>
-                <input type="email" id="owner-email" placeholder="Owner Email (for login)" required>
-                <input type="text" id="owner-phone" placeholder="Owner Phone (+92... for SMS)" required>
-                <input type="password" id="initial-password" placeholder="Initial Password (Min 8 chars)" required minlength="8">
-                <button type="submit">Create Saloon & Start Trial</button>
-                <p id="onboarding-message" class="message"></p>
-            </form>
+<body class="dashboard-layout">
+    <header class="header">
+        <h1>ASAMS Master Control</h1>
+        <button id="logout-btn" class="btn btn-primary">Sign Out</button>
+    </header>
+
+    <main class="main-content">
+        <div id="dashboard-message" style="display: none;"></div>
+
+        <section class="mb-8">
+            <h2>Onboard New Saloon & Owner</h2>
+            <div class="card max-w-none">
+                <div id="onboard-message" style="display: none;"></div>
+                <form id="onboard-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Column 1: Saloon Details -->
+                    <div>
+                        <label for="saloonName">Saloon Name</label>
+                        <input type="text" id="saloonName" name="saloonName" required placeholder="The Royal Clipper">
+                    </div>
+                    <div>
+                        <label for="ownerName">Owner Full Name</label>
+                        <input type="text" id="ownerName" name="ownerName" required placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label for="ownerPhone">Owner Phone (for Twilio)</label>
+                        <input type="tel" id="ownerPhone" name="ownerPhone" required placeholder="+12294665689">
+                    </div>
+                    <!-- Column 2: Login Credentials -->
+                    <div>
+                        <label for="email">Owner Email (Login)</label>
+                        <input type="email" id="email" name="email" required placeholder="owner@saloon.com">
+                    </div>
+                    <div>
+                        <label for="password">Initial Password</label>
+                        <input type="password" id="password" name="password" required minlength="8" placeholder="Must be 8+ characters">
+                    </div>
+                    
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <button type="submit" class="btn btn-secondary btn-block mt-4">Create & Start 15-Day Trial</button>
+                    </div>
+                </form>
+            </div>
         </section>
 
-        <section id="subscription-section">
-            <h2>2. Saloon Subscriptions (Manage Trial & Renewal)</h2>
-            <ul id="saloon-list">
-                <li>Loading saloons...</li>
-            </ul>
+        <section>
+            <h2>Active & Trial Saloons</h2>
+            <div id="saloons-list" class="mt-4">
+                <!-- Saloon list will be populated here by js/master_admin.js -->
+                <div class="loading-spinner"></div>
+            </div>
         </section>
-
-        <section id="coupon-section" class="content-section">
-            <h2>3. Master Coupon Codes (Subscription Discounts)</h2>
-            <p>Master Coupon management interface will be added here once Phase 3 and 4 are complete.</p>
-        </section>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script> 
-    
-    <script src="js/firebase_config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/master_admin.js"></script>
+    </main>
 </body>
 </html>
