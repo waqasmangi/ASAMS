@@ -1,78 +1,91 @@
-// js/auth.js
+// ASAMS Core Authentication and Redirection Logic
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged 
+} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { firebaseConfig } from './firebase_config.js';
 
-// This file relies on global 'auth', 'db', and 'functions' from firebase_config.js
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const errorMessage = document.getElementById('error-message');
-    errorMessage.textContent = '';
-    
-    e.target.querySelector('button').textContent = 'Authenticating...';
+// Use setLogLevel('Debug') for local debugging
+// import { setLogLevel } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+// setLogLevel('Debug');
 
-    try {
-        // Firebase Auth: Sign in
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+// --- Helper Functions ---
 
-        // Firestore: Fetch user role
-        const userDoc = await db.collection('users').doc(user.uid).get();
+/** Displays a styled error message on the page */
+function displayMessage(containerId, message, isError = true) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            const role = userData.role;
-            
-            // Role-Based Routing
-            if (role === 'master_admin') {
-                window.location.href = 'master_admin.html';
-            } else if (role === 'owner') {
-                // Subscription check is now fully implemented in saloon_admin.js
-                window.location.href = 'saloon_admin.html';
-            } else {
-                errorMessage.textContent = 'Invalid user role.';
-                auth.signOut();
-            }
-        } else {
-            errorMessage.textContent = 'User profile not found. Contact Master Admin.';
-            auth.signOut();
-        }
+    container.innerHTML = `<div class="${isError ? 'error-message' : 'success-message'}">${message}</div>`;
+    container.style.display = 'block';
+    setTimeout(() => {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }, 5000);
+}
 
-    } catch (error) {
-        console.error("Login Error:", error);
-        let message = 'Login failed. Please check your credentials.';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-             message = 'Invalid email or password.';
-        }
-        errorMessage.textContent = message;
-    } finally {
-         e.target.querySelector('button').textContent = 'Login';
-    }
-});
-
-/**
- * Checks authentication status and redirects based on the required role.
+/** * Checks the user's role claim and redirects to the appropriate dashboard. 
+ * If not authenticated, redirects to login.
  */
-const checkAuthAndRedirect = (requiredRole) => {
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = 'login.html';
-            return;
-        }
+function checkAuthAndRedirect() {
+    onAuthStateChanged(auth, async (user) => {
+        const currentPath = window.location.pathname;
+        const isAdminPage = currentPath.includes('admin'); // General check for admin pages
 
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (!userDoc.exists || userDoc.data().role !== requiredRole) {
-            console.error('Access Denied: Role mismatch or missing user data.');
-            auth.signOut();
+        if (user) {
+            // Get user's custom claims to determine role
+            const idTokenResult = await user.getIdTokenResult();
+            const role = idTokenResult.claims.role;
+
+            if (role === 'master_admin' && !currentPath.includes('master_admin.html')) {
+                window.location.href = 'master_admin.html';
+            } else if (role === 'saloon_owner' && !currentPath.includes('saloon_admin.html')) {
+                window.location.href = 'saloon_admin.html';
+            } else if (role && currentPath.includes('login.html')) {
+                // If logged in and on the login page, redirect to the correct dashboard
+                 window.location.href = role === 'master_admin' ? 'master_admin.html' : 'saloon_admin.html';
+            }
+        } else if (isAdminPage && !currentPath.includes('login.html')) {
+            // If not logged in and on an admin page, redirect to login
             window.location.href = 'login.html';
         }
     });
-};
+}
 
-const logout = () => {
-    auth.signOut().then(() => {
+/** Handles user sign-in */
+async function handleLogin(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // The onAuthStateChanged listener will handle the redirection after successful login
+    } catch (error) {
+        let message = "Login failed. Please check your email and password.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            message = "Invalid credentials.";
+        } else if (error.code === 'auth/too-many-requests') {
+            message = "Too many failed attempts. Please try again later.";
+        }
+        displayMessage('auth-message', message, true);
+        throw error; // Re-throw to allow calling script to handle UI changes (e.g., hiding spinner)
+    }
+}
+
+/** Handles user sign-out */
+function handleLogout() {
+    signOut(auth).then(() => {
+        // Redirection handled by onAuthStateChanged listener
         window.location.href = 'login.html';
     }).catch((error) => {
         console.error("Logout Error:", error);
     });
-};
+}
+
+// Export necessary variables and functions
+export { auth, db, handleLogin, handleLogout, checkAuthAndRedirect, displayMessage };
