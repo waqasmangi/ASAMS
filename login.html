@@ -1,32 +1,69 @@
-<!-- login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASAMS - Saloon Admin Login</title>
+    <title>ASAMS - Login</title>
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="js/auth.js"></script>
 </head>
 <body>
-    <div class="login-container">
-        <h2>ASAMS Admin Login</h2>
-        <form id="login-form">
-            <input type="email" id="email" placeholder="Email (Admin or Owner)" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-            <p id="error-message" class="error"></p>
-        </form>
+    <div class="auth-container">
+        <div class="card">
+            <h1>ASAMS Login</h1>
+            <p class="text-gray-500 mb-6">Access your Saloon or Master Admin Dashboard.</p>
+            
+            <div id="auth-message" style="display: none;"></div>
+            
+            <form id="login-form">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required placeholder="Enter your email">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="Enter your password">
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span id="login-text">Sign In</span>
+                    <div id="login-spinner" class="loading-spinner" style="display: none; width: 20px; height: 20px; margin: 0 auto;"></div>
+                </button>
+            </form>
+            
+            <p class="mt-4 text-sm text-center text-gray-400">
+                Initial Master Admin Login: waqasmangi.uk@gmail.com / 123456789
+            </p>
+        </div>
     </div>
 
-    <!-- REQUIRED FIREBASE SDK IMPORTS (CDN) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
-    
-    <!-- Project Scripts -->
-    <script src="js/firebase_config.js"></script>
-    <script src="js/auth.js"></script>
+    <script type="module">
+        import { handleLogin, checkAuthAndRedirect, displayMessage } from './js/auth.js';
+
+        // Check auth status immediately to handle existing sessions
+        checkAuthAndRedirect();
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const loginBtnText = document.getElementById('login-text');
+            const loginBtnSpinner = document.getElementById('login-spinner');
+            
+            // Show loading state
+            loginBtnText.style.display = 'none';
+            loginBtnSpinner.style.display = 'block';
+
+            try {
+                await handleLogin(email, password);
+                // Redirection is handled by checkAuthAndRedirect listener
+            } catch (error) {
+                // Keep the error message in the console for debugging
+                console.error("Login attempt failed:", error);
+            } finally {
+                // Restore button state
+                loginBtnText.style.display = 'inline';
+                loginBtnSpinner.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
