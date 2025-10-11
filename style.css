@@ -85,3 +85,26 @@ nav button {
 .hidden {
     display: none;
 }
+
+/* Service Table Styles */
+.service-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.service-table th, .service-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.service-table th {
+    background-color: #f2f2f2;
+}
+
+.action-btn {
+    padding: 5px 10px;
+    margin-right: 5px;
+    font-size: 12px;
+}
