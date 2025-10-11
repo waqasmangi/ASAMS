@@ -30,9 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 password: initialPassword,
                 ownerPhone: ownerPhone
             });
+            
+            // --- NEW: Generate Permalink and show success message ---
+            const newSaloonId = result.data.saloonId;
+            const baseURL = window.location.href.replace('master_admin.html', 'index.html');
+            const permalink = `${baseURL}?saloon=${newSaloonId}`;
+            
+            messageElement.innerHTML = `
+                <strong style="color: green;">Success! ${result.data.message}</strong><br>
+                <p>Saloon ID: ${newSaloonId}</p>
+                <p>Customer Link: <a href="${permalink}" target="_blank">${permalink}</a></p>
+                <button onclick="copyToClipboard('${permalink}')" style="width: auto; background-color: #5bc0de;">Copy Customer Link</button>
+            `;
+            // --- END NEW ---
 
-            messageElement.textContent = result.data.message;
-            messageElement.style.color = 'green';
             e.target.reset(); 
             // loadSaloonList will refresh automatically due to onSnapshot
 
@@ -52,6 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+// Function to copy text to clipboard (used for the permalink)
+const copyToClipboard = (text) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Link copied to clipboard!');
+};
 
 
 // Logic to load and display the list of saloons for management
@@ -83,14 +106,20 @@ const loadSaloonList = () => {
             listItem.style.border = `1px solid ${isExpired ? '#f00' : '#0f0'}`;
             listItem.style.borderRadius = '8px';
             
+            const baseURL = window.location.href.replace('master_admin.html', 'index.html');
+            const permalink = `${baseURL}?saloon=${saloon.saloon_id}`;
+
             listItem.innerHTML = `
                 <strong>${saloon.saloon_name}</strong> (ID: ${saloon.saloon_id})<br>
                 Owner UID: ${saloon.owner_uid}<br>
                 Status: <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span><br>
-                Expires: ${expiry}
+                Expires: ${expiry}<br>
+                
+                <p style="font-size: 0.9em; margin-top: 5px;">Customer Link: <a href="${permalink}" target="_blank">View</a></p>
+
                 <button 
                     onclick="renewSubscription('${saloon.saloon_id}', 30)"
-                    style="background-color: #007bff; margin-top: 10px; width: 250px;"
+                    style="background-color: #007bff; margin-top: 5px; width: auto; padding: 5px 15px;"
                 >
                     Renew for 30 Days (Rs. 499/-)
                 </button>
@@ -103,7 +132,7 @@ const loadSaloonList = () => {
     });
 };
 
-// Logic for subscription renewal (Extends expiry by 30 days)
+// ... (renewSubscription function remains the same)
 const renewSubscription = async (saloonId, days) => {
     if (!confirm(`Confirm: Renewal for Saloon ID ${saloonId} for ${days} days (Rs. 499/-)?`)) {
         return;
