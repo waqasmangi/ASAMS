@@ -1,163 +1,160 @@
-// js/master_admin.js
+// ASAMS Master Admin Logic
+import { db, auth, handleLogout, displayMessage } from './auth.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+import { 
+    collection, 
+    onSnapshot, 
+    updateDoc, 
+    doc 
+} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-// This file relies on global 'auth', 'db', and 'functions' from firebase_config.js
-
-// Reference the deployed Cloud Function
-const createSaloonAndOwner = functions.httpsCallable('createSaloonAndOwner');
-
-// === RUN AUTH CHECK AND INITIAL LOAD WHEN DOM IS READY ===
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Run the core authentication check defined in auth.js
-    checkAuthAndRedirect('master_admin'); 
-
-    // 2. Setup the event listener for the form
-    document.getElementById('create-saloon-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const saloonName = document.getElementById('saloon-name').value;
-        const ownerEmail = document.getElementById('owner-email').value;
-        const ownerPhone = document.getElementById('owner-phone').value;
-        const initialPassword = document.getElementById('initial-password').value;
-        const messageElement = document.getElementById('onboarding-message');
-        
-        messageElement.textContent = 'Processing...';
-        messageElement.style.color = 'orange';
-
-        try {
-            // Call the secure Cloud Function
-            const result = await createSaloonAndOwner({
-                saloonName: saloonName,
-                email: ownerEmail,
-                password: initialPassword,
-                ownerPhone: ownerPhone
-            });
-            
-            // --- NEW: Generate Permalink and show success message ---
-            const newSaloonId = result.data.saloonId;
-            const baseURL = window.location.href.replace('master_admin.html', 'index.html');
-            const permalink = `${baseURL}?saloon=${newSaloonId}`;
-            
-            messageElement.innerHTML = `
-                <strong style="color: green;">Success! ${result.data.message}</strong><br>
-                <p>Saloon ID: ${newSaloonId}</p>
-                <p>Customer Link: <a href="${permalink}" target="_blank">${permalink}</a></p>
-                <button onclick="copyToClipboard('${permalink}')" style="width: auto; background-color: #5bc0de;">Copy Customer Link</button>
-            `;
-            // --- END NEW ---
-
-            e.target.reset(); 
-            // loadSaloonList will refresh automatically due to onSnapshot
-
-        } catch (error) {
-            console.error("Master Admin Call Error:", error);
-            // Display error message from the function
-            messageElement.textContent = `Error: ${error.message}`;
-            messageElement.style.color = 'red';
-        }
-    });
-
-    // 3. Setup the real-time list loading after the user is confirmed logged in
-    auth.onAuthStateChanged(user => {
-        // Only load data if the user is authenticated (checkAuthAndRedirect ensures correct role)
-        if (user) {
-            loadSaloonList();
-        }
-    });
-});
-
-
-// Function to copy text to clipboard (used for the permalink)
-const copyToClipboard = (text) => {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    alert('Link copied to clipboard!');
+const saloonsCollectionRef = collection(db, 'saloons');
+const masterAdminFunctions = {
+    createSaloonAndOwner: httpsCallable(auth, 'createSaloonAndOwner')
 };
 
+let currentUserId = null;
 
-// Logic to load and display the list of saloons for management
-const loadSaloonList = () => {
-    const saloonListElement = document.getElementById('saloon-list');
+// Ensure auth is ready and user is master_admin before proceeding
+auth.onAuthStateChanged(user => {
+    if (user) {
+        user.getIdTokenResult().then(idTokenResult => {
+            if (idTokenResult.claims.role === 'master_admin') {
+                currentUserId = user.uid;
+                initMasterAdmin();
+            } else {
+                console.error('Unauthorized access. Redirecting...');
+                window.location.href = 'login.html';
+            }
+        });
+    }
+});
+
+function initMasterAdmin() {
+    setupUIListeners();
+    // Start listening for real-time saloon data
+    listenToSaloons();
+}
+
+function setupUIListeners() {
+    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    document.getElementById('onboard-form').addEventListener('submit', handleOnboardSubmit);
+}
+
+/**
+ * Handles the submission of the new saloon owner onboarding form.
+ */
+async function handleOnboardSubmit(e) {
+    e.preventDefault();
     
-    // Firestore: Use onSnapshot for real-time updates!
-    db.collection('saloons').onSnapshot(snapshot => {
-        saloonListElement.innerHTML = '';
-        
+    const form = e.target;
+    const email = form.email.value;
+    const password = form.password.value;
+    const saloonName = form.saloonName.value;
+    const ownerName = form.ownerName.value;
+    const ownerPhone = form.ownerPhone.value; // Important for Twilio notification
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading-spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>';
+
+    try {
+        const result = await masterAdminFunctions.createSaloonAndOwner({
+            email, password, saloonName, ownerName, ownerPhone
+        });
+
+        displayMessage('onboard-message', result.data.message, false);
+        form.reset();
+
+    } catch (error) {
+        console.error("Onboarding failed:", error);
+        displayMessage('onboard-message', error.message || "Failed to create saloon. Check console for details.", true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
+/**
+ * Listens to the 'saloons' collection and updates the UI in real-time.
+ */
+function listenToSaloons() {
+    const saloonsListEl = document.getElementById('saloons-list');
+
+    onSnapshot(saloonsCollectionRef, (snapshot) => {
+        let saloonsHtml = '';
         if (snapshot.empty) {
-            saloonListElement.innerHTML = '<li>No saloons currently onboarded.</li>';
+            saloonsListEl.innerHTML = '<p class="text-gray-500">No saloons currently registered.</p>';
             return;
         }
 
         snapshot.forEach(doc => {
             const saloon = doc.data();
-            // Firestore timestamp to JavaScript Date object
-            const expiry = saloon.subscription_expiry_date.toDate().toLocaleDateString('en-PK');
+            const id = doc.id;
+            const expiryDate = saloon.trialExpiry ? new Date(saloon.trialExpiry.toDate()).toLocaleDateString() : 'N/A';
+            const statusColor = saloon.status === 'active' ? 'text-green-600' : 
+                                saloon.status === 'trial' ? 'text-yellow-600' : 'text-red-600';
             
-            const now = new Date();
-            const isExpired = saloon.subscription_expiry_date.toDate() < now;
-            const statusColor = isExpired ? 'red' : 'green';
-            const statusText = isExpired ? 'EXPIRED 🚫' : (saloon.trial_mode ? 'TRIAL ACTIVE (15 Days) ⏳' : 'Active ✅');
-
-            const listItem = document.createElement('li');
-            listItem.style.marginBottom = '20px';
-            listItem.style.padding = '10px';
-            listItem.style.border = `1px solid ${isExpired ? '#f00' : '#0f0'}`;
-            listItem.style.borderRadius = '8px';
-            
-            const baseURL = window.location.href.replace('master_admin.html', 'index.html');
-            const permalink = `${baseURL}?saloon=${saloon.saloon_id}`;
-
-            listItem.innerHTML = `
-                <strong>${saloon.saloon_name}</strong> (ID: ${saloon.saloon_id})<br>
-                Owner UID: ${saloon.owner_uid}<br>
-                Status: <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span><br>
-                Expires: ${expiry}<br>
-                
-                <p style="font-size: 0.9em; margin-top: 5px;">Customer Link: <a href="${permalink}" target="_blank">View</a></p>
-
-                <button 
-                    onclick="renewSubscription('${saloon.saloon_id}', 30)"
-                    style="background-color: #007bff; margin-top: 5px; width: auto; padding: 5px 15px;"
-                >
-                    Renew for 30 Days (Rs. 499/-)
-                </button>
+            saloonsHtml += `
+                <div class="list-item">
+                    <div>
+                        <h3 class="mb-1">${saloon.saloonName}</h3>
+                        <p class="text-sm text-gray-500">Owner: ${saloon.ownerName || 'N/A'} (${saloon.ownerEmail})</p>
+                        <p class="text-sm text-gray-500">Phone: ${saloon.ownerPhone || 'N/A'}</p>
+                        <p class="text-sm">Trial Expiry: ${expiryDate}</p>
+                        <p class="text-sm font-semibold ${statusColor}">Status: ${saloon.status.toUpperCase()}</p>
+                        <p class="text-xs text-gray-400 mt-1">ID: ${id}</p>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button class="btn btn-secondary btn-sm" onclick="window.renewSaloon('${id}')" ${saloon.status === 'active' ? 'disabled' : ''}>Renew/Activate</button>
+                        <button class="btn btn-outline btn-sm" onclick="window.deactivateSaloon('${id}')" ${saloon.status === 'deactivated' ? 'disabled' : ''}>Deactivate</button>
+                    </div>
+                </div>
             `;
-            saloonListElement.appendChild(listItem);
         });
-    }, error => {
-        console.error("Error loading saloon list:", error);
-        saloonListElement.innerHTML = '<li>Error loading saloon list.</li>';
+
+        saloonsListEl.innerHTML = `<div class="list-grid">${saloonsHtml}</div>`;
+    }, (error) => {
+        console.error("Error listening to saloons:", error);
+        saloonsListEl.innerHTML = '<p class="error-message">Failed to load saloon data.</p>';
     });
-};
+}
 
-// ... (renewSubscription function remains the same)
-const renewSubscription = async (saloonId, days) => {
-    if (!confirm(`Confirm: Renewal for Saloon ID ${saloonId} for ${days} days (Rs. 499/-)?`)) {
-        return;
-    }
-
+/**
+ * Renews a saloon's subscription status.
+ */
+window.renewSaloon = async (saloonId) => {
     try {
-        const saloonRef = db.collection('saloons').doc(saloonId);
-        const saloonDoc = await saloonRef.get();
-        
-        let currentExpiry = saloonDoc.data().subscription_expiry_date.toDate();
-        
-        // Start renewal from the current expiry date if it's in the future, otherwise start from today
-        let newExpiry = currentExpiry > new Date() ? currentExpiry : new Date();
-        newExpiry.setDate(newExpiry.getDate() + days); // Add 30 days
+        const saloonRef = doc(db, 'saloons', saloonId);
+        // Set expiry far in the future (e.g., 1 year) and set status to active
+        const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); 
 
-        await saloonRef.update({
-            subscription_expiry_date: newExpiry,
-            is_active: true, // Ensure active status
-            trial_mode: false // End trial mode upon paid renewal
+        await updateDoc(saloonRef, {
+            status: 'active',
+            trialExpiry: oneYearFromNow
         });
-        
-        alert(`Subscription renewed! New expiry: ${newExpiry.toLocaleDateString('en-PK')}`);
+        displayMessage('dashboard-message', `Saloon ID: ${saloonId} is now Active!`, false);
 
     } catch (error) {
-        console.error("Renewal Error:", error);
-        alert('Failed to renew subscription.');
+        console.error("Renewal failed:", error);
+        displayMessage('dashboard-message', "Failed to renew saloon subscription.", true);
     }
-};
+}
+
+/**
+ * Deactivates a saloon's subscription status.
+ */
+window.deactivateSaloon = async (saloonId) => {
+    try {
+        const saloonRef = doc(db, 'saloons', saloonId);
+        await updateDoc(saloonRef, {
+            status: 'deactivated',
+            trialExpiry: new Date() // Set expiry to now for clarity
+        });
+        displayMessage('dashboard-message', `Saloon ID: ${saloonId} has been Deactivated.`, false);
+    } catch (error) {
+        console.error("Deactivation failed:", error);
+        displayMessage('dashboard-message', "Failed to deactivate saloon.", true);
+    }
+}
