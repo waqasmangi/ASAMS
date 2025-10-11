@@ -1,110 +1,134 @@
 // js/master_admin.js
 
+// This file relies on global 'auth', 'db', and 'functions' from firebase_config.js
+
 // Reference the deployed Cloud Function
-const functions = firebase.functions(); 
-// NOTE: If using an older Firebase SDK, you might need to call: firebase.functions().useEmulator('localhost', 5001); for local testing.
 const createSaloonAndOwner = functions.httpsCallable('createSaloonAndOwner');
 
-document.getElementById('create-saloon-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const saloonName = document.getElementById('saloon-name').value;
-    const ownerEmail = document.getElementById('owner-email').value;
-    const ownerPhone = document.getElementById('owner-phone').value;
-    const initialPassword = document.getElementById('initial-password').value;
-    const messageElement = document.getElementById('onboarding-message');
-    
-    messageElement.textContent = 'Processing...';
-    messageElement.style.color = 'orange';
+// === RUN AUTH CHECK AND INITIAL LOAD WHEN DOM IS READY ===
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Run the core authentication check defined in auth.js
+    checkAuthAndRedirect('master_admin'); 
 
-    // 1. Collect data and send it to the Cloud Function
-    try {
-        const result = await createSaloonAndOwner({
-            saloonName: saloonName,
-            email: ownerEmail,
-            password: initialPassword,
-            ownerPhone: ownerPhone
-        });
+    // 2. Setup the event listener for the form
+    document.getElementById('create-saloon-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saloonName = document.getElementById('saloon-name').value;
+        const ownerEmail = document.getElementById('owner-email').value;
+        const ownerPhone = document.getElementById('owner-phone').value;
+        const initialPassword = document.getElementById('initial-password').value;
+        const messageElement = document.getElementById('onboarding-message');
+        
+        messageElement.textContent = 'Processing...';
+        messageElement.style.color = 'orange';
 
-        // 2. Display success message
-        messageElement.textContent = result.data.message;
-        messageElement.style.color = 'green';
-        e.target.reset(); // Clear form on success
-        loadSaloonList(); // Refresh the list of saloons
+        try {
+            // Call the secure Cloud Function
+            const result = await createSaloonAndOwner({
+                saloonName: saloonName,
+                email: ownerEmail,
+                password: initialPassword,
+                ownerPhone: ownerPhone
+            });
 
-    } catch (error) {
-        console.error("Frontend Function Call Error:", error);
-        // Display error message from the function
-        messageElement.textContent = `Error: ${error.message}`;
-        messageElement.style.color = 'red';
-    }
+            messageElement.textContent = result.data.message;
+            messageElement.style.color = 'green';
+            e.target.reset(); 
+            // loadSaloonList will refresh automatically due to onSnapshot
+
+        } catch (error) {
+            console.error("Master Admin Call Error:", error);
+            // Display error message from the function
+            messageElement.textContent = `Error: ${error.message}`;
+            messageElement.style.color = 'red';
+        }
+    });
+
+    // 3. Setup the real-time list loading after the user is confirmed logged in
+    auth.onAuthStateChanged(user => {
+        // Only load data if the user is authenticated (checkAuthAndRedirect ensures correct role)
+        if (user) {
+            loadSaloonList();
+        }
+    });
 });
 
+
 // Logic to load and display the list of saloons for management
-const loadSaloonList = async () => {
+const loadSaloonList = () => {
     const saloonListElement = document.getElementById('saloon-list');
-    saloonListElement.innerHTML = '<li>Loading saloons...</li>';
     
-    try {
-        const snapshot = await db.collection('saloons').get();
-        saloonListElement.innerHTML = ''; // Clear loading message
+    // Firestore: Use onSnapshot for real-time updates!
+    db.collection('saloons').onSnapshot(snapshot => {
+        saloonListElement.innerHTML = '';
+        
+        if (snapshot.empty) {
+            saloonListElement.innerHTML = '<li>No saloons currently onboarded.</li>';
+            return;
+        }
 
         snapshot.forEach(doc => {
             const saloon = doc.data();
-            const expiry = saloon.subscription_expiry_date.toDate().toLocaleDateString();
-            const status = saloon.is_active && saloon.subscription_expiry_date.toDate() > new Date() ? 'Active ✅' : 'Expired ❌';
+            // Firestore timestamp to JavaScript Date object
+            const expiry = saloon.subscription_expiry_date.toDate().toLocaleDateString('en-PK');
             
+            const now = new Date();
+            const isExpired = saloon.subscription_expiry_date.toDate() < now;
+            const statusColor = isExpired ? 'red' : 'green';
+            const statusText = isExpired ? 'EXPIRED 🚫' : (saloon.trial_mode ? 'TRIAL ACTIVE (15 Days) ⏳' : 'Active ✅');
+
             const listItem = document.createElement('li');
+            listItem.style.marginBottom = '20px';
+            listItem.style.padding = '10px';
+            listItem.style.border = `1px solid ${isExpired ? '#f00' : '#0f0'}`;
+            listItem.style.borderRadius = '8px';
+            
             listItem.innerHTML = `
                 <strong>${saloon.saloon_name}</strong> (ID: ${saloon.saloon_id})<br>
                 Owner UID: ${saloon.owner_uid}<br>
-                Status: ${status}<br>
+                Status: <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span><br>
                 Expires: ${expiry}
-                <button onclick="renewSubscription('${saloon.saloon_id}', 30)">Renew for 1 Month (499/-)</button>
-                `;
+                <button 
+                    onclick="renewSubscription('${saloon.saloon_id}', 30)"
+                    style="background-color: #007bff; margin-top: 10px; width: 250px;"
+                >
+                    Renew for 30 Days (Rs. 499/-)
+                </button>
+            `;
             saloonListElement.appendChild(listItem);
         });
-    } catch (error) {
+    }, error => {
         console.error("Error loading saloon list:", error);
         saloonListElement.innerHTML = '<li>Error loading saloon list.</li>';
-    }
+    });
 };
 
-// Logic for subscription renewal
+// Logic for subscription renewal (Extends expiry by 30 days)
 const renewSubscription = async (saloonId, days) => {
-    // In a real system, payment integration would happen here.
-    // For now, we simulate renewal by extending the date.
-    if (!confirm(`Are you sure you want to renew subscription for saloon ${saloonId} by ${days} days?`)) {
+    if (!confirm(`Confirm: Renewal for Saloon ID ${saloonId} for ${days} days (Rs. 499/-)?`)) {
         return;
     }
 
     try {
         const saloonRef = db.collection('saloons').doc(saloonId);
         const saloonDoc = await saloonRef.get();
-        const currentExpiry = saloonDoc.data().subscription_expiry_date.toDate();
         
-        // Calculate new expiry date based on the current expiry, or today if already expired
+        let currentExpiry = saloonDoc.data().subscription_expiry_date.toDate();
+        
+        // Start renewal from the current expiry date if it's in the future, otherwise start from today
         let newExpiry = currentExpiry > new Date() ? currentExpiry : new Date();
-        newExpiry.setDate(newExpiry.getDate() + days);
+        newExpiry.setDate(newExpiry.getDate() + days); // Add 30 days
 
         await saloonRef.update({
             subscription_expiry_date: newExpiry,
-            is_active: true
+            is_active: true, // Ensure active status
+            trial_mode: false // End trial mode upon paid renewal
         });
         
-        alert(`Subscription renewed! New expiry: ${newExpiry.toLocaleDateString()}`);
-        loadSaloonList(); // Refresh the list
-        
-        // NOTE: We would also trigger a renewal confirmation SMS here via another Cloud Function.
+        alert(`Subscription renewed! New expiry: ${newExpiry.toLocaleDateString('en-PK')}`);
 
     } catch (error) {
         console.error("Renewal Error:", error);
         alert('Failed to renew subscription.');
     }
 };
-
-// Initial load call
-auth.onAuthStateChanged(user => {
-    if (user) {
-        loadSaloonList();
-    }
-});
