@@ -58,7 +58,8 @@ const checkOwnerAuth = () => {
             // Initialize all data management sections
             loadSaloonConfig(saloonData);
             loadOwnerServices();
-            loadOwnerBarbers(); // Load barbers list
+            loadOwnerBarbers();
+            setupAppointmentViewer(); // Initialize the new reporting feature
 
         } catch (error) {
             console.error("Owner Auth Error:", error);
@@ -77,13 +78,13 @@ const showSection = (sectionId) => {
 };
 
 
-// --- Service Management CRUD ---
+// --- Service Management CRUD (Complete) ---
 
 const loadOwnerServices = () => {
     const servicesRef = db.collection('saloons').doc(OWNER_SALOON_ID).collection('services');
     const container = document.getElementById('service-list-container');
     container.innerHTML = `
-        <h3>Add New Service</h3>
+        <h3>Add/Edit Service</h3>
         <form id="add-service-form" onsubmit="handleServiceSubmit(event)">
             <input type="hidden" id="service-doc-id" value="">
             <input type="text" id="service-name" placeholder="Service Name (e.g., Hair Cut)" required>
@@ -111,7 +112,7 @@ const loadOwnerServices = () => {
                                 <td>PKR ${s.price}</td>
                                 <td>${s.discount || 0}%</td>
                                 <td>
-                                    <button class="action-btn" onclick="editService('${doc.id}', '${s.name}', ${s.duration}, ${s.price}, ${s.discount || 0})">Edit</button>
+                                    <button class="action-btn" style="background-color: #ffc107;" onclick="editService('${doc.id}', '${s.name}', ${s.duration}, ${s.price}, ${s.discount || 0})">Edit</button>
                                     <button class="action-btn" style="background-color: #dc3545;" onclick="deleteService('${doc.id}')">Delete</button>
                                 </td>
                             </tr>`;
@@ -178,7 +179,7 @@ const deleteService = async (docId) => {
 };
 
 
-// --- Barber Management (Placeholder CRUD) ---
+// --- Barber Management (Complete CRUD) ---
 const loadOwnerBarbers = () => {
     const container = document.getElementById('barber-list-container');
     container.innerHTML = `
@@ -192,7 +193,7 @@ const loadOwnerBarbers = () => {
         <ul id="barber-list">Loading staff list...</ul>
     `;
     
-    // Load existing barbers
+    // Load existing barbers in real-time
     db.collection('saloons').doc(OWNER_SALOON_ID).collection('barbers').onSnapshot(snapshot => {
         const list = document.getElementById('barber-list');
         list.innerHTML = '';
@@ -233,10 +234,9 @@ const deleteBarber = async (docId) => {
 };
 
 
-// --- Saloon Configuration Management (Hours, Chairs, Contact) ---
+// --- Saloon Configuration Management (Complete Form Logic) ---
 const loadSaloonConfig = (saloonData) => {
     const form = document.getElementById('saloon-config-form');
-    // Use the existing config document reference for updates
     const configRef = db.collection('saloons').doc(OWNER_SALOON_ID);
 
     form.innerHTML = `
@@ -250,8 +250,8 @@ const loadSaloonConfig = (saloonData) => {
         <label for="address-input">Address:</label>
         <input type="text" id="address-input" value="${saloonData.address || ''}">
         
-        <label for="contact-cancel-input">Cancellation Contact Number:</label>
-        <input type="text" id="contact-cancel-input" value="${saloonData.contact_number || ''}" placeholder="Number for customers to call (30 min cancellation)">
+        <label for="contact-cancel-input">Cancellation Contact Number (For Customer SMS):</label>
+        <input type="text" id="contact-cancel-input" value="${saloonData.contact_number || ''}" placeholder="E.164 format, e.g., +923001234567" required>
 
         <label for="total-chairs-input">Total Chairs/Stations:</label>
         <input type="number" id="total-chairs-input" value="${saloonData.total_chairs || 1}" min="1">
@@ -261,11 +261,12 @@ const loadSaloonConfig = (saloonData) => {
         
         <h3>Booking & Payment Setup</h3>
         <label for="working-hours-input">Daily Working Hours (e.g., 09:00-18:00):</label>
-        <input type="text" id="working-hours-input" value="${saloonData.working_hours || '09:00-18:00'}">
+        <input type="text" id="working-hours-input" value="${saloonData.working_hours || '09:00-18:00'}" placeholder="HH:MM-HH:MM" required>
 
         <label>Accepted Payment Methods:</label>
         <div id="payment-options-container">
-            </div>
+            <!-- Checkboxes will be rendered here -->
+        </div>
         
         <button type="submit" style="background-color: #007bff; margin-top: 15px;">Save Configuration</button>
         <p id="config-message" class="message"></p>
@@ -313,6 +314,119 @@ const loadSaloonConfig = (saloonData) => {
     };
 };
 
+
+// --- Appointment Viewer, Filter, and Print (Complete) ---
+
+const setupAppointmentViewer = () => {
+    const container = document.getElementById('appointments-list');
+    
+    // Add filtering and printing controls
+    container.innerHTML = `
+        <h3>Appointments Viewer</h3>
+        <label for="appointment-day">Select Date:</label>
+        <input type="date" id="appointment-day" onchange="loadAppointmentsForDay(event.target.value)" required>
+        <button onclick="printAppointments()" style="background-color: #6c757d; width: auto; margin-left: 10px;">Print Report</button>
+        
+        <h4 style="margin-top: 20px;">Bookings for Selected Day:</h4>
+        <div id="daily-appointments-table">Please select a date above.</div>
+    `;
+    
+    // Set today's date as default
+    document.getElementById('appointment-day').value = new Date().toISOString().split('T')[0];
+    loadAppointmentsForDay(document.getElementById('appointment-day').value);
+};
+
+const loadAppointmentsForDay = async (dateStr) => {
+    if (!dateStr || !OWNER_SALOON_ID) return;
+    
+    const tableContainer = document.getElementById('daily-appointments-table');
+    tableContainer.innerHTML = 'Loading appointments...';
+
+    try {
+        // Define date range for the Firestore query
+        const date = new Date(dateStr);
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+
+        const appointmentsRef = db.collection('saloons').doc(OWNER_SALOON_ID).collection('appointments');
+        
+        // Use a simple query by date range
+        const snapshot = await appointmentsRef
+            .where('start_time', '>=', dayStart)
+            .where('start_time', '<=', dayEnd)
+            .get();
+
+        let tableHTML = `<table class="service-table">
+                            <thead><tr>
+                                <th>Time</th>
+                                <th>Service</th>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Price (PKR)</th>
+                                <th>Payment</th>
+                                <th>Notes</th>
+                            </tr></thead>
+                            <tbody>`;
+        
+        if (snapshot.empty) {
+            tableHTML += '<tr><td colspan="7">No appointments booked for this day.</td></tr>';
+        } else {
+            // Sort appointments by start time (client-side sorting is preferred over Firestore orderBy here)
+            const appointments = snapshot.docs.map(doc => doc.data());
+            appointments.sort((a, b) => a.start_time.toDate().getTime() - b.start_time.toDate().getTime());
+
+            appointments.forEach(app => {
+                const startTime = app.start_time.toDate().toLocaleTimeString('en-PK', { hour: '2-digit', minute:'2-digit' });
+                const notes = app.notes || '-';
+                
+                tableHTML += `<tr>
+                                <td>${startTime}</td>
+                                <td>${app.service}</td>
+                                <td>${app.customer_name}</td>
+                                <td>${app.customer_phone}</td>
+                                <td>${app.final_price}</td>
+                                <td>${app.payment_method}</td>
+                                <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${notes}</td>
+                              </tr>`;
+            });
+        }
+
+        tableHTML += '</tbody></table>';
+        tableContainer.innerHTML = tableHTML;
+
+    } catch (error) {
+        console.error("Error loading appointments:", error);
+        tableContainer.innerHTML = `<p class="error">Error fetching appointments: ${error.message}</p>`;
+    }
+};
+
+const printAppointments = () => {
+    const date = document.getElementById('appointment-day').value;
+    const tableHTML = document.getElementById('daily-appointments-table').innerHTML;
+    const saloonName = document.getElementById('saloon-welcome').textContent;
+    
+    // Create a new window for printing the formatted report
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write('<html><head><title>Appointment Report</title>');
+    
+    // Copy necessary CSS styles for readable printing
+    printWindow.document.write('<style>');
+    printWindow.document.write(document.querySelector('link[rel="stylesheet"]').outerHTML);
+    printWindow.document.write('body { font-family: Inter, sans-serif; margin: 20px; }');
+    printWindow.document.write('.service-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10pt; }');
+    printWindow.document.write('.service-table th, .service-table td { border: 1px solid #000; padding: 8px; text-align: left; }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    
+    printWindow.document.write(`<h1>${saloonName} Daily Appointment Report</h1>`);
+    printWindow.document.write(`<h2>Date: ${new Date(date).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })}</h2>`);
+    printWindow.document.write(tableHTML);
+    printWindow.document.write('</body></html>');
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+};
 
 // Start the check when the DOM content is loaded
 document.addEventListener('DOMContentLoaded', checkOwnerAuth);
