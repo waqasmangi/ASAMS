@@ -1,0 +1,83 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Book Saloon Appointment</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .booking-container { max-width: 600px; padding: 25px; margin: 50px auto; }
+        #saloon-selector, #booking-details-form { border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .service-card { padding: 10px; border: 1px solid #eee; margin-bottom: 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .service-card:hover { background-color: #f0f8ff; border-color: #007bff; }
+        .service-card.selected { border: 3px solid #28a745; background-color: #e6ffe6; }
+        #time-slots button { width: auto; margin: 5px; padding: 8px 15px; background-color: #f0f0f0; color: #333; border: 1px solid #ccc; }
+        #time-slots button.available { background-color: #007bff; color: white; border-color: #007bff; }
+        #time-slots button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .payment-option-label { display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="booking-container">
+        <h1 id="page-title">Book Your Appointment</h1>
+        <p>Please select your saloon, service, date, and time.</p>
+
+        <!-- STEP 1: Saloon Selection -->
+        <section id="saloon-selector">
+            <h2>1. Select Saloon</h2>
+            <select id="saloon-dropdown" required onchange="loadSaloonData()">
+                <option value="">-- Choose Saloon --</option>
+            </select>
+            <p id="saloon-info" style="margin-top: 15px;"></p>
+        </section>
+
+        <!-- STEP 2: Service Selection (Hidden initially) -->
+        <section id="service-selection" style="display:none;">
+            <h2>2. Choose Service & Date</h2>
+            <div id="service-list" style="margin-bottom: 20px;"></div>
+            
+            <input type="date" id="appointment-date" required onchange="calculateAvailableSlots()" style="margin-bottom: 15px;">
+        </section>
+
+        <!-- STEP 3: Time Slot Selection (Hidden initially) -->
+        <section id="slot-selection" style="display:none;">
+            <h2>3. Select Time Slot</h2>
+            <p id="time-slot-message" style="font-style: italic;"></p>
+            <div id="time-slots" style="margin-top: 15px;"></div>
+        </section>
+
+        <!-- STEP 4: Details & Confirmation (Hidden initially) -->
+        <section id="booking-details" style="display:none;">
+            <h2>4. Your Details & Payment</h2>
+            <form id="booking-details-form">
+                <input type="text" id="customer-name" placeholder="Your Name" required>
+                <input type="tel" id="customer-phone" placeholder="Contact Number (for SMS confirmation)" required>
+                <input type="email" id="customer-email" placeholder="Email (Optional)">
+                
+                <textarea id="customer-notes" placeholder="Additional Notes/Special Demands (e.g., specific style, short hair)" rows="3"></textarea>
+                
+                <h3>Payment & Price</h3>
+                <div id="price-summary" style="font-size: 1.1em; margin-bottom: 15px;"></div>
+                
+                <label>Select Payment Method:</label>
+                <div id="payment-method-container"></div>
+                
+                <button type="submit" id="final-book-btn">Confirm Booking</button>
+            </form>
+        </section>
+
+        <div id="final-message" class="message hidden"></div>
+    </div>
+
+    <!-- REQUIRED FIREBASE SDK IMPORTS (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions.js"></script>
+    
+    <!-- Project Scripts -->
+    <script src="js/firebase_config.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>
