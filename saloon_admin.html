@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saloon Owner Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="checkOwnerAuth()">
+    <div class="dashboard-container">
+        <h1 id="saloon-welcome">Loading Saloon Dashboard...</h1>
+        <button onclick="logout()">Logout</button>
+        
+        <p id="subscription-status"></p>
+
+        <nav>
+            <button onclick="showSection('services')">Services</button>
+            <button onclick="showSection('barbers')">Barbers</button>
+            <button onclick="showSection('config')">Configuration</button>
+            <button onclick="window.location.href='appointments.html'">View Appointments</button>
+        </nav>
+
+        <div id="services-section" class="content-section active">
+            <h2>Manage Services & Pricing</h2>
+            </div>
+
+        <div id="barbers-section" class="content-section hidden">
+            <h2>Manage Barbers & Availability</h2>
+            </div>
+
+        <div id="config-section" class="content-section hidden">
+            <h2>Saloon Configuration (Hours, Logo, Location)</h2>
+            </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="js/firebase_config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/saloon_admin.js"></script>
+</body>
+</html>
