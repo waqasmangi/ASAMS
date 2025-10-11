@@ -1,44 +1,53 @@
+<!-- master_admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin Dashboard</title>
+    <title>ASAMS - Master Admin Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body onload="checkAuthAndRedirect('master_admin')">
+<body>
     <div class="dashboard-container">
-        <h1>Master Admin Panel</h1>
+        <h1>Master Admin Panel - ASAMS</h1>
         <button onclick="logout()">Logout</button>
-        <p>Welcome, Master Admin. Manage your vendors and subscriptions here.</p>
         
+        <!-- Vendor Onboarding Form -->
         <section id="onboarding-section">
-            <h2>1. Onboard New Saloon Vendor</h2>
+            <h2>1. Onboard New Saloon Vendor (15-Day Free Trial)</h2>
             <form id="create-saloon-form">
                 <input type="text" id="saloon-name" placeholder="Saloon Name" required>
                 <input type="email" id="owner-email" placeholder="Owner Email (for login)" required>
                 <input type="text" id="owner-phone" placeholder="Owner Phone (+92... for SMS)" required>
                 <input type="password" id="initial-password" placeholder="Initial Password (Min 8 chars)" required minlength="8">
-                <button type="submit">Create Saloon & Send Welcome SMS</button>
+                <button type="submit">Create Saloon & Start Trial</button>
                 <p id="onboarding-message" class="message"></p>
             </form>
         </section>
 
+        <!-- Subscription Management Section -->
         <section id="subscription-section">
-            <h2>2. Active Saloons & Subscriptions</h2>
+            <h2>2. Saloon Subscriptions (Manage Trial & Renewal)</h2>
             <ul id="saloon-list">
-                </ul>
+                <li>Loading saloons...</li>
+            </ul>
         </section>
 
-        <section id="coupon-section">
+        <!-- Master Coupon Management Placeholder -->
+        <section id="coupon-section" class="content-section">
             <h2>3. Master Coupon Codes (Subscription Discounts)</h2>
-            </section>
+            <p>Master Coupon management interface will be added here once Phase 3 and 4 are complete.</p>
+        </section>
     </div>
 
+    <!-- REQUIRED FIREBASE SDK IMPORTS -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script> <!-- Added Storage SDK for completeness -->
+    
+    <!-- Project Scripts -->
     <script src="js/firebase_config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/master_admin.js"></script>
