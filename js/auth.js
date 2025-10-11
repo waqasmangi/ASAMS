@@ -27,7 +27,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             if (role === 'master_admin') {
                 window.location.href = 'master_admin.html';
             } else if (role === 'owner') {
-                // Subscription check is now fully implemented in saloon_admin.html on load
+                // Subscription check is now fully implemented in saloon_admin.js
                 window.location.href = 'saloon_admin.html';
             } else {
                 errorMessage.textContent = 'Invalid user role.';
@@ -52,7 +52,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
 /**
  * Checks authentication status and redirects based on the required role.
- * Uses Firestore (db) to fetch the user's role.
  */
 const checkAuthAndRedirect = (requiredRole) => {
     auth.onAuthStateChanged(async (user) => {
