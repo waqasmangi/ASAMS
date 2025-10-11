@@ -1,360 +1,330 @@
-// js/index.js
+// ASAMS Customer Booking Logic
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { getFirestore, doc, getDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+import { firebaseConfig } from './firebase_config.js';
 
-// NOTE: This script relies on global 'db' and 'functions' from firebase_config.js
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app); // Functions need auth context
+const bookAppointmentAndNotify = httpsCallable(auth, 'bookAppointmentAndNotify');
 
-let selectedSaloonId = null;
+// Global state for booking process
+let saloonId = null;
+let saloonConfig = null;
+let availableServices = [];
 let selectedService = null;
-let selectedTime = null;
-let saloonConfig = {};
+let selectedDate = new Date();
+let selectedSlot = null;
+let currentStep = 1;
 
-// Reference the secure Cloud Function deployed in functions/index.js
-const bookAppointmentAndNotify = functions.httpsCallable('bookAppointmentAndNotify');
+// --- Utility Functions ---
 
-// === 1. INITIAL SETUP: Load Saloons ===
-const initializeBookingSystem = () => {
-    loadSaloonDropdown();
-    document.getElementById('booking-details-form').addEventListener('submit', handleFinalBooking);
+function displayMessage(containerId, message, isError = true) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = `<div class="${isError ? 'error-message' : 'success-message'}">${message}</div>`;
+    container.style.display = 'block';
+    setTimeout(() => {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }, 5000);
+}
+
+function showStep(step) {
+    document.querySelectorAll('.step-content').forEach(content => content.style.display = 'none');
+    document.getElementById(`step-${step}`).style.display = 'block';
     
-    // Set min date for date picker to today
-    const dateInput = document.getElementById('appointment-date');
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.min = today;
-};
-
-document.addEventListener('DOMContentLoaded', initializeBookingSystem); // FIX: Ensure DOM and all dependencies are loaded before execution
-
-const loadSaloonDropdown = async () => {
-    const dropdown = document.getElementById('saloon-dropdown');
-    try {
-        // Fetch all active saloons for the customer to choose from
-        const snapshot = await db.collection('saloons').where('is_active', '==', true).get();
-        if (snapshot.empty) {
-            dropdown.innerHTML = '<option value="">-- Choose Saloon --</option>';
-            return;
-        }
-        
-        dropdown.innerHTML = '<option value="">-- Choose Saloon --</option>'; // Resetting dropdown
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            // Basic check to ensure subscription is active (extra safety)
-            if (data.subscription_expiry_date && data.subscription_expiry_date.toDate() > new Date()) {
-                dropdown.innerHTML += `<option value="${data.saloon_id}">${data.saloon_name}</option>`;
-            }
-        });
-    } catch (error) {
-        console.error("Error loading saloons:", error);
-    }
-};
-
-const loadSaloonData = async () => {
-    selectedSaloonId = document.getElementById('saloon-dropdown').value;
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
     
-    // Reset state
-    selectedService = null;
-    selectedTime = null;
-    document.getElementById('service-selection').style.display = 'none';
-    document.getElementById('slot-selection').style.display = 'none';
-    document.getElementById('booking-details').style.display = 'none';
-    document.getElementById('saloon-info').innerHTML = '';
-    document.getElementById('time-slots').innerHTML = '';
-    
-    if (!selectedSaloonId) return;
+    currentStep = step;
+}
 
-    try {
-        // Fetch Saloon Config (used for working hours, chairs, payment)
-        const saloonDoc = await db.collection('saloons').doc(selectedSaloonId).get();
-        saloonConfig = saloonDoc.data();
-        
-        document.getElementById('saloon-info').innerHTML = `
-            <strong>Address:</strong> ${saloonConfig.address || 'N/A'}<br>
-            <strong>Working Hours:</strong> ${saloonConfig.working_hours || 'N/A'} (Please note working hours)<br>
-            <strong>Facilities:</strong> ${saloonConfig.facilities_description || 'N/A'}
-        `;
-        
-        // Load services and proceed to step 2
-        await loadServices();
-        document.getElementById('service-selection').style.display = 'block';
+// --- Initialization ---
 
-    } catch (error) {
-        console.error("Error loading saloon config:", error);
-        document.getElementById('saloon-info').innerHTML = '<span class="error">Error loading saloon details.</span>';
-    }
-};
+window.onload = () => {
+    // Extract Saloon ID from URL (e.g., index.html?id=saloonUid)
+    const params = new URLSearchParams(window.location.search);
+    saloonId = params.get('id');
 
-
-// === 2. SERVICE SELECTION ===
-const loadServices = async () => {
-    const serviceListContainer = document.getElementById('service-list');
-    serviceListContainer.innerHTML = 'Loading services...';
-
-    try {
-        const snapshot = await db.collection('saloons').doc(selectedSaloonId).collection('services').get();
-        
-        if (snapshot.empty) {
-            serviceListContainer.innerHTML = '<p class="error">No services are configured for this saloon.</p>';
-            return;
-        }
-
-        serviceListContainer.innerHTML = '';
-        snapshot.forEach(doc => {
-            const s = doc.data();
-            const discount = s.discount || 0;
-            const finalPrice = s.price * (1 - discount / 100);
-            
-            const card = document.createElement('div');
-            card.className = 'service-card';
-            card.setAttribute('data-doc-id', doc.id);
-
-            card.innerHTML = `
-                <strong>${s.name}</strong> - ${s.duration} mins<br>
-                Price: PKR ${finalPrice.toFixed(0)} 
-                ${discount > 0 ? `<span style="text-decoration: line-through; color: #aaa;">PKR ${s.price}</span> (${discount}% off)` : ''}
-            `;
-            card.onclick = () => selectService(doc.id, s.name, s.duration, finalPrice.toFixed(0));
-            serviceListContainer.appendChild(card);
-        });
-
-    } catch (error) {
-        console.error("Error loading services:", error);
-        serviceListContainer.innerHTML = '<p class="error">Error fetching services.</p>';
-    }
-};
-
-const selectService = (docId, name, duration, price) => {
-    // Visually select the card
-    document.querySelectorAll('.service-card').forEach(card => card.classList.remove('selected'));
-    document.querySelector(`.service-card[data-doc-id="${docId}"]`).classList.add('selected');
-    
-    selectedService = { docId, name, duration, price };
-    selectedTime = null; // Reset time if service changes
-    
-    // Clear time slots display
-    document.getElementById('time-slots').innerHTML = '';
-    document.getElementById('booking-details').style.display = 'none';
-
-    // Proceed to calculate slots if a date is already selected
-    if (document.getElementById('appointment-date').value) {
-        calculateAvailableSlots();
-    }
-    document.getElementById('slot-selection').style.display = 'block';
-};
-
-
-// === 3. SLOT CALCULATION ===
-const calculateAvailableSlots = async () => {
-    if (!selectedService || !selectedSaloonId) return;
-
-    const date = document.getElementById('appointment-date').value;
-    const slotsContainer = document.getElementById('time-slots');
-    const message = document.getElementById('time-slot-message');
-    slotsContainer.innerHTML = 'Calculating slots...';
-    message.textContent = '';
-    
-    if (!date) {
-        slotsContainer.innerHTML = '';
+    if (!saloonId) {
+        document.getElementById('booking-app').innerHTML = '<div class="error-message text-center">Error: Saloon ID is missing from the URL (e.g., ?id=saloonUid).</div>';
         return;
     }
 
-    // Get working hours (Format: HH:MM-HH:MM)
-    const hoursRegex = /(\d{2}):(\d{2})-(\d{2}):(\d{2})/;
-    const hoursMatch = saloonConfig.working_hours.match(hoursRegex);
-    
-    if (!hoursMatch) {
-         message.textContent = 'Saloon working hours are incorrectly configured.';
-         slotsContainer.innerHTML = '';
-         return;
+    loadSaloonData();
+    setupUIListeners();
+};
+
+function setupUIListeners() {
+    document.getElementById('date-picker').addEventListener('change', (e) => {
+        selectedDate = new Date(e.target.value);
+        selectedSlot = null; // Reset slot when date changes
+        renderAvailableSlots();
+    });
+    document.getElementById('back-to-step-1').addEventListener('click', () => showStep(1));
+    document.getElementById('next-to-step-3').addEventListener('click', () => {
+        if (!selectedSlot) {
+            displayMessage('slot-message', 'Please select an available time slot.', true);
+            return;
+        }
+        showStep(3);
+    });
+    document.getElementById('booking-form').addEventListener('submit', handleBookingSubmit);
+}
+
+// --- Step 1: Service Selection ---
+
+async function loadSaloonData() {
+    const loadingEl = document.getElementById('loading-state');
+    loadingEl.style.display = 'block';
+
+    try {
+        // 1. Get Saloon Config
+        const saloonDoc = await getDoc(doc(db, 'saloons', saloonId));
+        if (!saloonDoc.exists() || saloonDoc.data().status !== 'active') {
+             throw new Error('Saloon not found or is currently inactive.');
+        }
+        saloonConfig = saloonDoc.data().config;
+        document.getElementById('saloon-name').textContent = saloonDoc.data().saloonName || 'ASAMS Saloon';
+        
+        // 2. Get Services
+        const servicesSnapshot = await getDocs(collection(db, 'saloons', saloonId, 'services'));
+        availableServices = servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (availableServices.length === 0) {
+            throw new Error('No services available for booking.');
+        }
+
+        renderServices();
+        showStep(1); // Start the application at Step 1
+
+    } catch (error) {
+        console.error("Error loading saloon data:", error);
+        document.getElementById('booking-app').innerHTML = `<div class="error-message text-center">${error.message}</div>`;
+    } finally {
+        loadingEl.style.display = 'none';
     }
+}
+
+function renderServices() {
+    const servicesListEl = document.getElementById('services-list-step-1');
+    servicesListEl.innerHTML = '';
     
-    const [_, startHour, startMinute, endHour, endMinute] = hoursMatch.map(Number);
+    let servicesHtml = availableServices.map(service => `
+        <div class="service-card cursor-pointer hover:shadow-md transition duration-200" data-service-id="${service.id}" onclick="window.selectService('${service.id}')">
+            <h3>${service.name}</h3>
+            <p class="text-sm text-gray-500">${service.description || 'No description provided.'}</p>
+            <div class="card-details">
+                <p class="font-bold text-lg text-primary">$${service.price.toFixed(2)} / ${service.durationMin} min</p>
+                <button class="btn btn-secondary btn-sm">Select</button>
+            </div>
+        </div>
+    `).join('');
+    
+    servicesListEl.innerHTML = `<div class="list-grid">${servicesHtml}</div>`;
+}
 
-    const serviceDuration = selectedService.duration;
-    const chairs = saloonConfig.total_chairs || 1; 
+window.selectService = (serviceId) => {
+    selectedService = availableServices.find(s => s.id === serviceId);
+    if (selectedService) {
+        // Highlight selected card
+        document.querySelectorAll('.service-card').forEach(card => card.classList.remove('border-primary', 'border-2'));
+        document.querySelector(`.service-card[data-service-id="${serviceId}"]`).classList.add('border-primary', 'border-2');
+        
+        // Pre-fill date picker to today or tomorrow
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        document.getElementById('date-picker').valueAsDate = tomorrow;
+        selectedDate = tomorrow; // Initialize selectedDate
+        
+        showStep(2);
+        renderAvailableSlots();
+    }
+}
 
-    // 1. Define day boundaries based on selected date
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
+// --- Step 2: Slot Selection ---
 
-    // 2. Fetch existing appointments for the selected day
-    const appointmentsRef = db.collection('saloons').doc(selectedSaloonId).collection('appointments');
-    const snapshot = await appointmentsRef
-        .where('start_time', '>=', dayStart)
-        .where('start_time', '<=', dayEnd)
-        .get();
+async function getExistingAppointments(date) {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
 
-    const bookedSlots = snapshot.docs.map(doc => {
+    const appointmentsRef = collection(db, 'saloons', saloonId, 'appointments');
+    const q = query(
+        appointmentsRef,
+        where('startTime', '>=', startOfDay),
+        where('startTime', '<=', endOfDay)
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => {
         const data = doc.data();
         return {
-            start: data.start_time.toDate().getTime(),
-            end: data.end_time.toDate().getTime()
+            startTime: data.startTime.toDate().getTime(),
+            endTime: data.endTime.toDate().getTime(),
         };
     });
+}
 
-    // 3. Generate and check availability
-    let currentTime = new Date(date);
-    currentTime.setHours(startHour, startMinute, 0, 0); // Start at configured working time
+function calculateTimeSlots(config, serviceDuration, existingAppointments) {
+    const slots = [];
+    if (!config) return slots;
     
-    const saloonCloseTime = new Date(date);
-    saloonCloseTime.setHours(endHour, endMinute, 0, 0);
-
-    slotsContainer.innerHTML = '';
-    let foundSlots = false;
-    const now = new Date();
-
-    // Iterate through potential start times (15-minute intervals)
-    while (currentTime.getTime() < saloonCloseTime.getTime()) {
-        const potentialStart = currentTime.getTime();
-        const potentialEnd = potentialStart + serviceDuration * 60 * 1000;
-        
-        // Break if the service ends after closing time
-        if (potentialEnd > saloonCloseTime.getTime()) {
-             break;
-        }
-
-        // Skip if the slot is in the past (only affects today's date)
-        if (potentialEnd < now.getTime()) {
-            currentTime.setMinutes(currentTime.getMinutes() + 15);
-            continue;
-        }
-
-        // Check availability of chairs during this time window
-        let conflicts = 0;
-        for (const booked of bookedSlots) {
-            // Check for overlap: [Start A < End B] AND [End A > Start B]
-            if (potentialStart < booked.end && potentialEnd > booked.start) {
-                conflicts++;
-            }
-        }
-        
-        const isAvailable = conflicts < chairs;
-
-        // 4. Render the button
-        const slotTimeStr = currentTime.toLocaleTimeString('en-PK', { hour: '2-digit', minute:'2-digit' });
-        const button = document.createElement('button');
-        button.textContent = slotTimeStr;
-        button.className = isAvailable ? 'available' : 'booked';
-        button.disabled = !isAvailable;
-
-        if (isAvailable) {
-            button.onclick = () => selectTimeSlot(button, potentialStart, potentialEnd);
-            foundSlots = true;
-        }
-
-        slotsContainer.appendChild(button);
-
-        // Move to the next potential start time (15-minute increments)
-        currentTime.setMinutes(currentTime.getMinutes() + 15);
+    // Ensure slot duration is valid (minimum slot duration from config)
+    const minSlotDuration = config.slotDurationMin;
+    if (serviceDuration % minSlotDuration !== 0) {
+        console.error("Service duration is not a multiple of the minimum slot duration.");
+        return slots;
     }
-    
-    if (!foundSlots) {
-        message.textContent = 'No available slots found on this date or service duration is too long.';
-    } else {
-         message.textContent = `Available slots for ${selectedService.name}:`;
+
+    const startMinutes = parseInt(config.startTime.split(':')[0]) * 60 + parseInt(config.startTime.split(':')[1]);
+    const endMinutes = parseInt(config.endTime.split(':')[0]) * 60 + parseInt(config.endTime.split(':')[1]);
+    const lunchStartMinutes = parseInt(config.lunchBreakStart.split(':')[0]) * 60 + parseInt(config.lunchBreakStart.split(':')[1]);
+    const lunchEndMinutes = parseInt(config.lunchBreakEnd.split(':')[0]) * 60 + parseInt(config.lunchBreakEnd.split(':')[1]);
+
+    for (let currentStart = startMinutes; currentStart < endMinutes; currentStart += minSlotDuration) {
+        const proposedEnd = currentStart + serviceDuration;
+
+        // 1. Check if the slot ends after business hours
+        if (proposedEnd > endMinutes) continue;
+
+        // 2. Check if the slot falls over the lunch break
+        const isLunchConflict = (currentStart < lunchEndMinutes && proposedEnd > lunchStartMinutes);
+        if (isLunchConflict) continue;
+
+        // 3. Check for conflict with existing appointments
+        const proposedStartTime = new Date(selectedDate);
+        proposedStartTime.setHours(Math.floor(currentStart / 60), currentStart % 60, 0, 0);
+        const proposedEndTime = new Date(selectedDate);
+        proposedEndTime.setHours(Math.floor(proposedEnd / 60), proposedEnd % 60, 0, 0);
+
+        const isBooked = existingAppointments.some(appt => {
+            // Check for overlap: (StartA < EndB) && (EndA > StartB)
+            return (proposedStartTime.getTime() < appt.endTime) && (proposedEndTime.getTime() > appt.startTime);
+        });
+
+        if (!isBooked) {
+            slots.push({
+                start: proposedStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                end: proposedEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                startTime: proposedStartTime.toISOString(),
+                endTime: proposedEndTime.toISOString()
+            });
+        }
     }
+    return slots;
+}
+
+async function renderAvailableSlots() {
+    const slotPickerEl = document.getElementById('time-slot-picker');
+    const slotMessageEl = document.getElementById('slot-message');
+    slotPickerEl.innerHTML = '<div class="loading-spinner"></div>';
+    slotMessageEl.style.display = 'none';
     
-    // Reset confirmation section
-    document.getElementById('booking-details').style.display = 'none';
-};
+    const dayOfWeek = selectedDate.toLocaleDateString('en-US', { weekday: 'short' });
+    const isWorkingDay = saloonConfig.workingDays && saloonConfig.workingDays.includes(dayOfWeek);
 
-const selectTimeSlot = (button, startTimeMs, endTimeMs) => {
-    // Highlight the selected button
-    document.querySelectorAll('#time-slots button').forEach(btn => btn.classList.remove('selected'));
-    button.classList.add('selected');
-
-    selectedTime = {
-        start: new Date(startTimeMs),
-        end: new Date(endTimeMs)
-    };
-    
-    // Show confirmation section (Step 4)
-    renderPriceSummary();
-    renderPaymentMethods();
-    document.getElementById('booking-details').style.display = 'block';
-};
-
-const renderPriceSummary = () => {
-    const summary = document.getElementById('price-summary');
-    const finalPrice = selectedService.price; 
-    
-    const formattedTime = selectedTime.start.toLocaleTimeString('en-PK', { hour: '2-digit', minute:'2-digit' });
-    const formattedDate = selectedTime.start.toLocaleDateString('en-PK');
-
-    summary.innerHTML = `
-        <p>Service: <strong>${selectedService.name}</strong></p>
-        <p>Date & Time: <strong>${formattedDate} at ${formattedTime}</strong></p>
-        <p style="font-size: 1.2em; font-weight: bold; color: #28a745;">Total Price: PKR ${finalPrice}</p>
-    `;
-};
-
-const renderPaymentMethods = () => {
-    const container = document.getElementById('payment-method-container');
-    const methods = saloonConfig.payment_options || ['Cash'];
-    container.innerHTML = '';
-    
-    methods.forEach(method => {
-        container.innerHTML += `
-            <label class="payment-option-label">
-                <input type="radio" name="payment-method" value="${method}" required>
-                ${method}
-            </label>
-        `;
-    });
-};
-
-
-// === 4. FINAL BOOKING SUBMISSION ===
-const handleFinalBooking = async (e) => {
-    e.preventDefault();
-    if (!selectedTime || !selectedService || !selectedSaloonId) {
-        alert('Please complete steps 1-3 first.');
+    if (!isWorkingDay) {
+        slotPickerEl.innerHTML = '<p class="text-center p-4 text-red-500 font-semibold">The saloon is closed on this day.</p>';
         return;
     }
 
-    const finalMessage = document.getElementById('final-message');
-    finalMessage.classList.remove('hidden', 'error');
-    finalMessage.style.backgroundColor = 'orange';
-    finalMessage.textContent = 'Processing booking and sending confirmation SMS...';
+    try {
+        const existingAppointments = await getExistingAppointments(selectedDate);
+        const availableSlots = calculateTimeSlots(saloonConfig, selectedService.durationMin, existingAppointments);
+
+        slotPickerEl.innerHTML = '';
+        if (availableSlots.length === 0) {
+            slotPickerEl.innerHTML = '<p class="text-center p-4 text-gray-500">No available slots for this day.</p>';
+        } else {
+            availableSlots.forEach(slot => {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'time-slot';
+                slotEl.textContent = slot.start;
+                slotEl.dataset.startTime = slot.startTime;
+                slotEl.dataset.endTime = slot.endTime;
+                slotEl.onclick = () => selectSlot(slotEl, slot);
+                slotPickerEl.appendChild(slotEl);
+            });
+        }
+    } catch (error) {
+        console.error("Error rendering slots:", error);
+        slotPickerEl.innerHTML = '<p class="error-message p-4">Failed to calculate time slots.</p>';
+    }
+}
+
+function selectSlot(slotEl, slotData) {
+    document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+    slotEl.classList.add('selected');
+    selectedSlot = slotData;
+    displayMessage('slot-message', `${selectedService.name} booked from ${slotData.start} to ${slotData.end}. Click 'Next' to confirm.`, false);
+}
+
+// --- Step 3: Final Submission ---
+
+async function handleBookingSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
     
-    const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
-    
-    const bookingData = {
-        saloonId: selectedSaloonId,
-        serviceName: selectedService.name,
-        customerName: document.getElementById('customer-name').value,
-        customerPhone: document.getElementById('customer-phone').value,
-        customerEmail: document.getElementById('customer-email').value,
-        notes: document.getElementById('customer-notes').value,
-        startTime: selectedTime.start.toISOString(),
-        endTime: selectedTime.end.toISOString(),
-        finalPrice: selectedService.price,
-        paymentMethod: paymentMethod
+    if (!selectedService || !selectedSlot) {
+        displayMessage('final-message', 'Service or time slot is missing. Please review your selection.', true);
+        return;
+    }
+
+    const customerData = {
+        customerName: form.querySelector('#customer-name').value,
+        customerPhone: form.querySelector('#customer-phone').value,
+        customerEmail: form.querySelector('#customer-email').value
     };
+    
+    // Simple validation for phone number (Twilio requires E.164 format or similar)
+    if (!customerData.customerPhone.match(/^\+\d{10,15}$/)) {
+         displayMessage('final-message', 'Phone number must be in international format (e.g., +15551234567).', true);
+         return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading-spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>';
 
     try {
-        // Call the secure Cloud Function to handle DB write and Twilio SMS
-        const result = await bookAppointmentAndNotify(bookingData);
+        const bookingPayload = {
+            saloonId: saloonId,
+            serviceId: selectedService.id,
+            serviceName: selectedService.name,
+            startTime: selectedSlot.startTime, // ISO string for Cloud Function to parse
+            endTime: selectedSlot.endTime,
+            ...customerData
+        };
 
-        finalMessage.textContent = `Success! ${result.data.message}`;
-        finalMessage.style.backgroundColor = '#d4edda'; // light green
-        finalMessage.style.color = '#155724';
+        const result = await bookAppointmentAndNotify(bookingPayload);
 
-        // Clear and reload steps 2, 3, 4
-        document.getElementById('booking-details-form').reset();
-        selectedTime = null;
-        selectedService = null;
-        document.getElementById('service-selection').style.display = 'none';
-        document.getElementById('slot-selection').style.display = 'none';
-        document.getElementById('booking-details').style.display = 'none';
-
-        // Re-calculate slots (This is important to prevent double booking right away)
-        calculateAvailableSlots();
+        // Success state
+        document.getElementById('booking-app').innerHTML = `
+            <div class="card max-w-lg text-center mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-secondary mx-auto mb-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <h2 class="text-secondary">Booking Confirmed!</h2>
+                <p class="text-lg mb-4">You are all set for your appointment at <span class="font-bold">${document.getElementById('saloon-name').textContent}</span>.</p>
+                <p class="text-sm text-gray-600">Confirmation SMS sent to ${customerData.customerPhone}.</p>
+                <a href="${window.location.pathname}?id=${saloonId}" class="btn btn-primary mt-6">Book Another Appointment</a>
+            </div>
+        `;
 
     } catch (error) {
-        console.error("Booking Error:", error);
-        finalMessage.textContent = `Booking Failed: ${error.message}`;
-        finalMessage.style.backgroundColor = '#f8d7da'; // light red
-        finalMessage.style.color = '#721c24';
+        console.error("Booking submission failed:", error);
+        displayMessage('final-message', error.message || "Booking failed. Please check your network or try again.", true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
     }
-};
+}
