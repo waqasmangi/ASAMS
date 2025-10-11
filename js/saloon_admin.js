@@ -1,432 +1,286 @@
-// js/saloon_admin.js
+// ASAMS Saloon Owner Dashboard Logic
+import { db, auth, handleLogout, displayMessage } from './auth.js';
+import { 
+    collection, 
+    onSnapshot, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc, 
+    doc, 
+    getDoc,
+    query,
+    where
+} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-let OWNER_SALOON_ID = null; // Global variable to store the authorized saloon ID
+let saloonId = null;
+let saloonData = {};
+let selectedServiceId = null;
 
-/**
- * Custom authentication check for the Owner role.
- * Includes a mandatory subscription expiry check using Firestore.
- */
-const checkOwnerAuth = () => {
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = 'login.html';
+// --- Initialization and Auth Check ---
+auth.onAuthStateChanged(user => {
+    if (user) {
+        user.getIdTokenResult().then(idTokenResult => {
+            if (idTokenResult.claims.role === 'saloon_owner') {
+                saloonId = idTokenResult.claims.saloonId;
+                initSaloonAdmin();
+            } else {
+                console.error('Unauthorized access. Redirecting...');
+                window.location.href = 'login.html';
+            }
+        });
+    }
+});
+
+function initSaloonAdmin() {
+    console.log('Saloon Admin initialized for ID:', saloonId);
+    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    
+    // Setup tab navigation
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+    });
+    
+    // Setup form listeners
+    document.getElementById('service-form').addEventListener('submit', handleServiceSubmit);
+    document.getElementById('config-form').addEventListener('submit', handleConfigSubmit);
+    
+    // Initial data load
+    loadSaloonConfig();
+    listenToServices();
+    listenToAppointments();
+
+    // Default tab
+    switchTab('services');
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    document.getElementById(`${tabName}-content`).style.display = 'block';
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+}
+
+// --- Saloon Configuration (Availability) ---
+
+const saloonRef = () => doc(db, 'saloons', saloonId);
+
+async function loadSaloonConfig() {
+    try {
+        const docSnap = await getDoc(saloonRef());
+        if (docSnap.exists()) {
+            saloonData = docSnap.data();
+            const config = saloonData.config || {};
+            
+            // Set UI details
+            document.getElementById('saloon-name-display').textContent = saloonData.saloonName || 'Your Saloon';
+            
+            // Populate Config Form
+            document.getElementById('start-time').value = config.startTime || '09:00';
+            document.getElementById('end-time').value = config.endTime || '17:00';
+            document.getElementById('lunch-start').value = config.lunchBreakStart || '12:00';
+            document.getElementById('lunch-end').value = config.lunchBreakEnd || '13:00';
+            document.getElementById('slot-duration').value = config.slotDurationMin || 30;
+            
+            // The status can also be displayed here
+            const statusEl = document.getElementById('saloon-status');
+            const expiryDate = saloonData.trialExpiry ? new Date(saloonData.trialExpiry.toDate()).toLocaleDateString() : 'N/A';
+            statusEl.textContent = `Status: ${saloonData.status.toUpperCase()} | Expires: ${expiryDate}`;
+            statusEl.className = `font-semibold text-sm ${saloonData.status === 'active' ? 'text-green-600' : 'text-red-600'}`;
+
+        } else {
+            displayMessage('dashboard-message', 'Saloon configuration not found. Please contact support.', true);
+        }
+    } catch (error) {
+        console.error("Error loading config:", error);
+        displayMessage('dashboard-message', 'Failed to load saloon configuration.', true);
+    }
+}
+
+async function handleConfigSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const config = {
+        startTime: form.querySelector('#start-time').value,
+        endTime: form.querySelector('#end-time').value,
+        lunchBreakStart: form.querySelector('#lunch-start').value,
+        lunchBreakEnd: form.querySelector('#lunch-end').value,
+        slotDurationMin: parseInt(form.querySelector('#slot-duration').value, 10),
+        workingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] // Hardcoded for simplicity, could be dynamic
+    };
+
+    try {
+        await updateDoc(saloonRef(), { config: config });
+        displayMessage('config-message', 'Availability configuration saved successfully!', false);
+    } catch (error) {
+        console.error("Error saving config:", error);
+        displayMessage('config-message', 'Failed to save configuration.', true);
+    }
+}
+
+
+// --- Services CRUD ---
+
+const servicesCollectionRef = () => collection(db, 'saloons', saloonId, 'services');
+
+function listenToServices() {
+    const servicesListEl = document.getElementById('services-list');
+    
+    onSnapshot(servicesCollectionRef(), (snapshot) => {
+        let servicesHtml = '';
+        if (snapshot.empty) {
+            servicesListEl.innerHTML = '<p class="text-gray-500">No services created yet.</p>';
             return;
         }
 
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (!userDoc.exists || userDoc.data().role !== 'owner') {
-                alert('Access Denied. Insufficient permissions.');
-                logout();
-                return;
-            }
-
-            const userData = userDoc.data();
-            OWNER_SALOON_ID = userData.saloon_id;
-
-            const saloonDoc = await db.collection('saloons').doc(OWNER_SALOON_ID).get();
-            if (!saloonDoc.exists) {
-                document.body.innerHTML = '<h1>Saloon data not found. Contact support.</h1>';
-                return;
-            }
-
-            const saloonData = saloonDoc.data();
-            const expiryDate = saloonData.subscription_expiry_date.toDate();
-            const now = new Date();
-            
-            // 3. Subscription Check
-            const statusElement = document.getElementById('subscription-status');
-            statusElement.textContent = `Subscription Expires: ${expiryDate.toLocaleDateString('en-PK')}`;
-
-            if (expiryDate < now) {
-                // Subscription Expired: Lock out the owner
-                document.body.innerHTML = `
-                    <div class="expired-lockout dashboard-container">
-                        <h1>Subscription Expired! 🚫</h1>
-                        <p>Your access to the dashboard ended on: ${expiryDate.toLocaleDateString('en-PK')}</p>
-                        <p>Please contact the Master Admin to renew your service.</p>
-                        <button onclick="logout()">Logout</button>
+        snapshot.forEach(doc => {
+            const service = doc.data();
+            const id = doc.id;
+            servicesHtml += `
+                <div class="service-card">
+                    <h3>${service.name}</h3>
+                    <p class="text-gray-500">${service.description || 'No description provided.'}</p>
+                    <div class="card-details">
+                        <p class="font-bold text-lg text-primary">$${service.price.toFixed(2)} / ${service.durationMin} min</p>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline" onclick="window.editService('${id}', '${service.name}', ${service.durationMin}, ${service.price}, '${service.description}')">Edit</button>
+                            <button class="btn btn-primary" onclick="window.deleteService('${id}')">Delete</button>
+                        </div>
                     </div>
-                `;
-                return;
-            }
-            
-            // 4. Access Granted: Load Dashboard Content
-            document.getElementById('saloon-welcome').textContent = `${saloonData.saloon_name} Dashboard`;
-            statusElement.style.color = 'green';
-            
-            // Initialize all data management sections
-            loadSaloonConfig(saloonData);
-            loadOwnerServices();
-            loadOwnerBarbers();
-            setupAppointmentViewer(); // Initialize the new reporting feature
-
-        } catch (error) {
-            console.error("Owner Auth Error:", error);
-            document.body.innerHTML = '<h1>An error occurred during authentication.</h1>';
-            logout();
-        }
+                </div>
+            `;
+        });
+        servicesListEl.innerHTML = `<div class="list-grid">${servicesHtml}</div>`;
+    }, (error) => {
+        console.error("Error listening to services:", error);
+        servicesListEl.innerHTML = '<p class="error-message">Failed to load services.</p>';
     });
-};
+}
 
-// --- UI/Helper Functions ---
-const showSection = (sectionId) => {
-    document.querySelectorAll('.content-section').forEach(section => {
-        section.classList.add('hidden');
-    });
-    document.getElementById(`${sectionId}-section`).classList.remove('hidden');
-};
+function resetServiceForm() {
+    document.getElementById('service-form').reset();
+    document.getElementById('service-form-title').textContent = 'Add New Service';
+    document.getElementById('service-form-btn').textContent = 'Add Service';
+    selectedServiceId = null;
+}
 
-
-// --- Service Management CRUD (Complete) ---
-
-const loadOwnerServices = () => {
-    const servicesRef = db.collection('saloons').doc(OWNER_SALOON_ID).collection('services');
-    const container = document.getElementById('service-list-container');
-    container.innerHTML = `
-        <h3>Add/Edit Service</h3>
-        <form id="add-service-form" onsubmit="handleServiceSubmit(event)">
-            <input type="hidden" id="service-doc-id" value="">
-            <input type="text" id="service-name" placeholder="Service Name (e.g., Hair Cut)" required>
-            <input type="number" id="service-duration" placeholder="Duration (mins)" required>
-            <input type="number" id="service-price" placeholder="Base Price (PKR)" required>
-            <input type="number" id="service-discount" placeholder="Discount (%) (Optional)" value="0">
-            <button type="submit" id="service-submit-btn">Add Service</button>
-        </form>
-        <h3>Current Services</h3>
-        <div id="service-list-table">Loading services...</div>
-    `;
-
-    servicesRef.onSnapshot(snapshot => {
-        let tableHTML = `<table class="service-table">
-                            <thead><tr><th>Name</th><th>Duration</th><th>Price</th><th>Discount</th><th>Actions</th></tr></thead>
-                            <tbody>`;
-        if (snapshot.empty) {
-            tableHTML += '<tr><td colspan="5">No services available.</td></tr>';
-        } else {
-            snapshot.forEach(doc => {
-                const s = doc.data();
-                tableHTML += `<tr>
-                                <td>${s.name}</td>
-                                <td>${s.duration} mins</td>
-                                <td>PKR ${s.price}</td>
-                                <td>${s.discount || 0}%</td>
-                                <td>
-                                    <button class="action-btn" style="background-color: #ffc107;" onclick="editService('${doc.id}', '${s.name}', ${s.duration}, ${s.price}, ${s.discount || 0})">Edit</button>
-                                    <button class="action-btn" style="background-color: #dc3545;" onclick="deleteService('${doc.id}')">Delete</button>
-                                </td>
-                            </tr>`;
-            });
-        }
-        tableHTML += '</tbody></table>';
-        document.getElementById('service-list-table').innerHTML = tableHTML;
-    });
-};
-
-const handleServiceSubmit = async (e) => {
-    e.preventDefault();
-    if (!OWNER_SALOON_ID) return;
-
-    const docId = document.getElementById('service-doc-id').value;
-    const name = document.getElementById('service-name').value;
-    const duration = parseInt(document.getElementById('service-duration').value);
-    const price = parseInt(document.getElementById('service-price').value);
-    const discount = parseInt(document.getElementById('service-discount').value) || 0;
-
-    const serviceData = { name, duration, price, discount };
-
-    try {
-        const servicesRef = db.collection('saloons').doc(OWNER_SALOON_ID).collection('services');
-        if (docId) {
-            // Edit/Update
-            await servicesRef.doc(docId).update(serviceData);
-            alert('Service updated successfully!');
-        } else {
-            // Add/Create
-            await servicesRef.add(serviceData);
-            alert('Service added successfully!');
-        }
-        // Reset form after submit
-        document.getElementById('add-service-form').reset();
-        document.getElementById('service-doc-id').value = '';
-        document.getElementById('service-submit-btn').textContent = 'Add Service';
-
-    } catch (error) {
-        console.error("Error submitting service:", error);
-        alert(`Failed to save service: ${error.message}`);
-    }
-};
-
-const editService = (docId, name, duration, price, discount) => {
-    document.getElementById('service-doc-id').value = docId;
+window.editService = (id, name, duration, price, description) => {
+    selectedServiceId = id;
+    document.getElementById('service-form-title').textContent = 'Edit Service';
+    document.getElementById('service-form-btn').textContent = 'Save Changes';
+    
     document.getElementById('service-name').value = name;
     document.getElementById('service-duration').value = duration;
     document.getElementById('service-price').value = price;
-    document.getElementById('service-discount').value = discount;
-    document.getElementById('service-submit-btn').textContent = 'Update Service';
-    showSection('services'); // Ensure the section is visible
+    document.getElementById('service-description').value = description;
+
+    // Scroll to the form
+    document.getElementById('service-form-card').scrollIntoView({ behavior: 'smooth' });
 };
 
-const deleteService = async (docId) => {
-    if (!confirm('Are you sure you want to delete this service?')) return;
+async function handleServiceSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const serviceData = {
+        name: form.querySelector('#service-name').value,
+        durationMin: parseInt(form.querySelector('#service-duration').value, 10),
+        price: parseFloat(form.querySelector('#service-price').value),
+        description: form.querySelector('#service-description').value
+    };
+
+    if (isNaN(serviceData.durationMin) || serviceData.durationMin <= 0) {
+        displayMessage('service-message', 'Duration must be a positive number.', true);
+        return;
+    }
+    
     try {
-        await db.collection('saloons').doc(OWNER_SALOON_ID).collection('services').doc(docId).delete();
-        alert('Service deleted successfully!');
+        if (selectedServiceId) {
+            // Update existing service
+            await updateDoc(doc(servicesCollectionRef(), selectedServiceId), serviceData);
+            displayMessage('service-message', 'Service updated successfully!', false);
+        } else {
+            // Add new service
+            await addDoc(servicesCollectionRef(), serviceData);
+            displayMessage('service-message', 'Service added successfully!', false);
+        }
+        resetServiceForm();
+    } catch (error) {
+        console.error("Error submitting service:", error);
+        displayMessage('service-message', `Failed to submit service: ${error.message}`, true);
+    }
+}
+
+window.deleteService = async (serviceId) => {
+    // NOTE: In a real app, use a styled modal for confirmation instead of a browser alert/confirm.
+    if (!confirm("Are you sure you want to delete this service?")) return;
+
+    try {
+        await deleteDoc(doc(servicesCollectionRef(), serviceId));
+        displayMessage('service-message', 'Service deleted successfully.', false);
     } catch (error) {
         console.error("Error deleting service:", error);
-        alert('Failed to delete service.');
+        displayMessage('service-message', 'Failed to delete service.', true);
     }
-};
+}
 
 
-// --- Barber Management (Complete CRUD) ---
-const loadOwnerBarbers = () => {
-    const container = document.getElementById('barber-list-container');
-    container.innerHTML = `
-        <h3>Manage Staff/Barbers</h3>
-        <form id="add-barber-form" onsubmit="handleAddBarber(event)">
-            <input type="text" id="barber-name" placeholder="Barber Name" required>
-            <input type="text" id="barber-specialty" placeholder="Specialty (e.g., Hair/Shave)" required>
-            <button type="submit">Add Barber</button>
-        </form>
-        <h3>Current Staff</h3>
-        <ul id="barber-list">Loading staff list...</ul>
-    `;
-    
-    // Load existing barbers in real-time
-    db.collection('saloons').doc(OWNER_SALOON_ID).collection('barbers').onSnapshot(snapshot => {
-        const list = document.getElementById('barber-list');
-        list.innerHTML = '';
-        if (snapshot.empty) {
-            list.innerHTML = '<li>No barbers added yet.</li>';
+// --- Appointments Viewer ---
+
+const appointmentsCollectionRef = () => collection(db, 'saloons', saloonId, 'appointments');
+
+function listenToAppointments() {
+    const appointmentsListEl = document.getElementById('appointments-list');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today for filtering
+
+    // Query appointments for today and future
+    const appointmentsQuery = query(
+        appointmentsCollectionRef(),
+        where('startTime', '>=', today)
+        // No orderBy to avoid needing indexes. Will sort in JS.
+    );
+
+    onSnapshot(appointmentsQuery, (snapshot) => {
+        let appointments = [];
+        snapshot.forEach(doc => {
+            const appt = doc.data();
+            appt.id = doc.id;
+            appointments.push(appt);
+        });
+
+        // Sort by start time (in-memory sorting)
+        appointments.sort((a, b) => a.startTime.seconds - b.startTime.seconds);
+
+        let appointmentsHtml = '';
+        if (appointments.length === 0) {
+            appointmentsListEl.innerHTML = '<p class="text-gray-500">No upcoming appointments found.</p>';
             return;
         }
-        snapshot.forEach(doc => {
-            const b = doc.data();
-            list.innerHTML += `<li>${b.name} (${b.specialty}) <button class="action-btn" style="background-color: #dc3545;" onclick="deleteBarber('${doc.id}')">Delete</button></li>`;
-        });
-    });
-};
 
-const handleAddBarber = async (e) => {
-    e.preventDefault();
-    if (!OWNER_SALOON_ID) return;
-    const name = document.getElementById('barber-name').value;
-    const specialty = document.getElementById('barber-specialty').value;
-
-    try {
-        await db.collection('saloons').doc(OWNER_SALOON_ID).collection('barbers').add({ name, specialty });
-        alert('Barber added!');
-        e.target.reset();
-    } catch (error) {
-        console.error("Error adding barber:", error);
-    }
-};
-
-const deleteBarber = async (docId) => {
-    if (!confirm('Are you sure you want to delete this barber?')) return;
-    try {
-        await db.collection('saloons').doc(OWNER_SALOON_ID).collection('barbers').doc(docId).delete();
-        alert('Barber deleted!');
-    } catch (error) {
-        console.error("Error deleting barber:", error);
-    }
-};
-
-
-// --- Saloon Configuration Management (Complete Form Logic) ---
-const loadSaloonConfig = (saloonData) => {
-    const form = document.getElementById('saloon-config-form');
-    const configRef = db.collection('saloons').doc(OWNER_SALOON_ID);
-
-    form.innerHTML = `
-        <h3>General Details</h3>
-        <label for="saloon-name-input">Saloon Name (Set by Admin):</label>
-        <input type="text" id="saloon-name-input" value="${saloonData.saloon_name}" disabled>
-
-        <label for="owner-name-input">Owner Name:</label>
-        <input type="text" id="owner-name-input" value="${saloonData.owner_name || ''}">
-
-        <label for="address-input">Address:</label>
-        <input type="text" id="address-input" value="${saloonData.address || ''}">
-        
-        <label for="contact-cancel-input">Cancellation Contact Number (For Customer SMS):</label>
-        <input type="text" id="contact-cancel-input" value="${saloonData.contact_number || ''}" placeholder="E.164 format, e.g., +923001234567" required>
-
-        <label for="total-chairs-input">Total Chairs/Stations:</label>
-        <input type="number" id="total-chairs-input" value="${saloonData.total_chairs || 1}" min="1">
-
-        <label for="facilities-desc-input">Facilities Description:</label>
-        <textarea id="facilities-desc-input" rows="3" placeholder="Free Wi-Fi, Coffee, AC etc.">${saloonData.facilities_description || ''}</textarea>
-        
-        <h3>Booking & Payment Setup</h3>
-        <label for="working-hours-input">Daily Working Hours (e.g., 09:00-18:00):</label>
-        <input type="text" id="working-hours-input" value="${saloonData.working_hours || '09:00-18:00'}" placeholder="HH:MM-HH:MM" required>
-
-        <label>Accepted Payment Methods:</label>
-        <div id="payment-options-container">
-            <!-- Checkboxes will be rendered here -->
-        </div>
-        
-        <button type="submit" style="background-color: #007bff; margin-top: 15px;">Save Configuration</button>
-        <p id="config-message" class="message"></p>
-    `;
-
-    // Payment methods rendering
-    const paymentOptions = ['Cash', 'EasyPaisa', 'JazzCash', 'Bank Transfer', 'Credit Card'];
-    const selectedPayments = saloonData.payment_options || [];
-    const container = document.getElementById('payment-options-container');
-    container.innerHTML = paymentOptions.map(option => `
-        <label style="display: block;">
-            <input type="checkbox" name="payment-option" value="${option}" ${selectedPayments.includes(option) ? 'checked' : ''}>
-            ${option}
-        </label>
-    `).join('');
-
-    // Handle form submission
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const checkedPayments = Array.from(container.querySelectorAll('input[name="payment-option"]:checked')).map(cb => cb.value);
-
-        const newConfig = {
-            owner_name: document.getElementById('owner-name-input').value,
-            address: document.getElementById('address-input').value,
-            contact_number: document.getElementById('contact-cancel-input').value,
-            total_chairs: parseInt(document.getElementById('total-chairs-input').value),
-            facilities_description: document.getElementById('facilities-desc-input').value,
-            working_hours: document.getElementById('working-hours-input').value,
-            payment_options: checkedPayments
-        };
-
-        const messageElement = document.getElementById('config-message');
-        messageElement.textContent = 'Saving...';
-        messageElement.style.color = 'orange';
-
-        try {
-            await configRef.update(newConfig);
-            messageElement.textContent = 'Configuration saved successfully!';
-            messageElement.style.color = 'green';
-        } catch (error) {
-            console.error("Error saving config:", error);
-            messageElement.textContent = `Error saving configuration: ${error.message}`;
-            messageElement.style.color = 'red';
-        }
-    };
-};
-
-
-// --- Appointment Viewer, Filter, and Print (Complete) ---
-
-const setupAppointmentViewer = () => {
-    const container = document.getElementById('appointments-list');
-    
-    // Add filtering and printing controls
-    container.innerHTML = `
-        <h3>Appointments Viewer</h3>
-        <label for="appointment-day">Select Date:</label>
-        <input type="date" id="appointment-day" onchange="loadAppointmentsForDay(event.target.value)" required>
-        <button onclick="printAppointments()" style="background-color: #6c757d; width: auto; margin-left: 10px;">Print Report</button>
-        
-        <h4 style="margin-top: 20px;">Bookings for Selected Day:</h4>
-        <div id="daily-appointments-table">Please select a date above.</div>
-    `;
-    
-    // Set today's date as default
-    document.getElementById('appointment-day').value = new Date().toISOString().split('T')[0];
-    loadAppointmentsForDay(document.getElementById('appointment-day').value);
-};
-
-const loadAppointmentsForDay = async (dateStr) => {
-    if (!dateStr || !OWNER_SALOON_ID) return;
-    
-    const tableContainer = document.getElementById('daily-appointments-table');
-    tableContainer.innerHTML = 'Loading appointments...';
-
-    try {
-        // Define date range for the Firestore query
-        const date = new Date(dateStr);
-        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
-        const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-
-        const appointmentsRef = db.collection('saloons').doc(OWNER_SALOON_ID).collection('appointments');
-        
-        // Use a simple query by date range
-        const snapshot = await appointmentsRef
-            .where('start_time', '>=', dayStart)
-            .where('start_time', '<=', dayEnd)
-            .get();
-
-        let tableHTML = `<table class="service-table">
-                            <thead><tr>
-                                <th>Time</th>
-                                <th>Service</th>
-                                <th>Customer</th>
-                                <th>Phone</th>
-                                <th>Price (PKR)</th>
-                                <th>Payment</th>
-                                <th>Notes</th>
-                            </tr></thead>
-                            <tbody>`;
-        
-        if (snapshot.empty) {
-            tableHTML += '<tr><td colspan="7">No appointments booked for this day.</td></tr>';
-        } else {
-            // Sort appointments by start time (client-side sorting is preferred over Firestore orderBy here)
-            const appointments = snapshot.docs.map(doc => doc.data());
-            appointments.sort((a, b) => a.start_time.toDate().getTime() - b.start_time.toDate().getTime());
-
-            appointments.forEach(app => {
-                const startTime = app.start_time.toDate().toLocaleTimeString('en-PK', { hour: '2-digit', minute:'2-digit' });
-                const notes = app.notes || '-';
-                
-                tableHTML += `<tr>
-                                <td>${startTime}</td>
-                                <td>${app.service}</td>
-                                <td>${app.customer_name}</td>
-                                <td>${app.customer_phone}</td>
-                                <td>${app.final_price}</td>
-                                <td>${app.payment_method}</td>
-                                <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${notes}</td>
-                              </tr>`;
+        appointments.forEach(appt => {
+            const startTime = appt.startTime.toDate().toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             });
-        }
+            const statusColor = appt.status === 'confirmed' ? 'text-green-600' : 'text-gray-500';
 
-        tableHTML += '</tbody></table>';
-        tableContainer.innerHTML = tableHTML;
-
-    } catch (error) {
-        console.error("Error loading appointments:", error);
-        tableContainer.innerHTML = `<p class="error">Error fetching appointments: ${error.message}</p>`;
-    }
-};
-
-const printAppointments = () => {
-    const date = document.getElementById('appointment-day').value;
-    const tableHTML = document.getElementById('daily-appointments-table').innerHTML;
-    const saloonName = document.getElementById('saloon-welcome').textContent;
-    
-    // Create a new window for printing the formatted report
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Appointment Report</title>');
-    
-    // Copy necessary CSS styles for readable printing
-    printWindow.document.write('<style>');
-    printWindow.document.write(document.querySelector('link[rel="stylesheet"]').outerHTML);
-    printWindow.document.write('body { font-family: Inter, sans-serif; margin: 20px; }');
-    printWindow.document.write('.service-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10pt; }');
-    printWindow.document.write('.service-table th, .service-table td { border: 1px solid #000; padding: 8px; text-align: left; }');
-    printWindow.document.write('</style>');
-    printWindow.document.write('</head><body>');
-    
-    printWindow.document.write(`<h1>${saloonName} Daily Appointment Report</h1>`);
-    printWindow.document.write(`<h2>Date: ${new Date(date).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })}</h2>`);
-    printWindow.document.write(tableHTML);
-    printWindow.document.write('</body></html>');
-    
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-};
-
-// Start the check when the DOM content is loaded
-document.addEventListener('DOMContentLoaded', checkOwnerAuth);
+            appointmentsHtml += `
+                <div class="appointment-card list-item">
+                    <h3 class="text-xl">${appt.serviceName}</h3>
+                    <p class="font-semibold text-primary">${startTime}</p>
+                    <p class="text-sm mt-2">Customer: ${appt.customerName}</p>
+                    <p class="text-sm">Phone: ${appt.customerPhone}</p>
+                    <p class="text-sm">Email: ${appt.customerEmail}</p>
+                    <p class="text-xs mt-2 ${statusColor}">Status: ${appt.status.toUpperCase()}</p>
+                </div>
+            `;
+        });
+        appointmentsListEl.innerHTML = `<div class="list-grid">${appointmentsHtml}</div>`;
+    }, (error) => {
+        console.error("Error listening to appointments:", error);
+        appointmentsListEl.innerHTML = '<p class="error-message">Failed to load appointments.</p>';
+    });
+}
