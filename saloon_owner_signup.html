@@ -8,6 +8,20 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+
+<script src="firebase-config.js"></script>
+
+<script>
+    // Initialize Firebase using the config object from firebase-config.js
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = app.auth();
+    const db = app.firestore();
+    const functions = app.functions('us-central1'); // Use the correct region if different
+</script>
 
     <style>
         /* CSS Variables for Branding */

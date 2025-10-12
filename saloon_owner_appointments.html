@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - My Appointments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+
+<script src="firebase-config.js"></script>
+
+<script>
+    // Initialize Firebase using the config object from firebase-config.js
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = app.auth();
+    const db = app.firestore();
+    const functions = app.functions('us-central1'); // Use the correct region if different
+</script>
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Font Classes */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="flex justify-between items-center pt-2 pb-6">
+            <a href="#" class="mr-3 text-gray-400 hover:text-white">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </a>
+            <h1 class="text-2xl font-bold text-white tracking-wider font-cinzel flex-grow text-center">
+                My Appointments
+            </h1>
+            <i data-lucide="more-vertical" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
+        </header>
+
+        <main class="flex-grow pb-24 space-y-4">
+
+            <div class="p-4 rounded-xl shadow-lg border-l-4" style="background-color: var(--darker-bg); border-color: var(--gold);">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-3">
+                        <p class="text-sm font-semibold text-white uppercase px-2 py-1 rounded" style="background-color: var(--gold); color: var(--darker-bg);">
+                            TODAY
+                        </p>
+                        <p class="text-sm font-semibold text-white">Tomorrow, Wednesday, Oct 25</p>
+                    </div>
+                </div>
+
+                <div class="mt-2 pl-4">
+                    <p class="text-xl font-bold text-white mb-1">Haircut + Beard Trim</p>
+                    <p class="text-sm text-gray-400">10:30 AM with Barber Mike</p>
+                    <p class="text-sm text-gray-400">TOTAL: $40</p>
+                </div>
+
+                <div class="mt-4 border-t border-gray-700 pt-3">
+                    <button class="w-full p-3 rounded-full uppercase font-bold text-sm text-black" style="background-color: var(--gold);">
+                        CANCEL APPOINTMENT
+                    </button>
+                    <p class="text-xs text-red-400 mt-2 flex items-center justify-center">
+                        <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                        Cancellation is free up to 30 min before the appointment.
+                    </p>
+                    <p class="text-xs text-gray-400 text-center">
+                        Time left to cancel: 12 hrs 30 min
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl shadow-lg" style="background-color: var(--darker-bg);">
+                <div class="flex justify-between items-start mb-3">
+                    <p class="text-sm font-semibold text-white">Fri, Dec 15</p>
+                </div>
+                <div class="mt-2 pl-4">
+                    <p class="text-xl font-bold text-white mb-1">Beard Trim</p>
+                    <p class="text-sm text-gray-400">with Barber Sarah</p>
+                    <p class="text-sm font-bold text-white mt-2">TOTAL: $40</p>
+                </div>
+            </div>
+
+        </main>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                PROFILE
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                MESSAGES
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="star" class="w-5 h-5 mb-1"></i>
+                REVIEWS
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>
