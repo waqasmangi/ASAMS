@@ -149,6 +149,60 @@
             </a>
         </nav>
     </footer>
+<script>
+    const loginForm = document.querySelector('form');
 
+    // Define the default Master Admin credentials 
+    const MASTER_ADMIN_EMAIL = 'waqasmangi.uk@gmail.com';
+    const MASTER_ADMIN_PASSWORD = 'Ayaan@10539';
+    const MASTER_ADMIN_UID_PLACEHOLDER = 'masterAdminUID'; // Placeholder UID for initial setup
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('password').value;
+
+        // 1. Check if trying to log in with the default Master Admin credentials
+        if (email === MASTER_ADMIN_EMAIL && password === MASTER_ADMIN_PASSWORD) {
+            
+            // NOTE: In a real system, the Master Admin's password should be changed immediately 
+            // after the first login and updated in Firebase Auth.
+
+            // Attempt to sign in via Firebase Auth
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+
+                    // Security Check: Ensure the logged-in user is the master admin (using a simple email check here)
+                    if (user.email === MASTER_ADMIN_EMAIL) {
+                        alert("Master Admin Login successful! Redirecting to dashboard.");
+                        window.location.href = 'master_admin_dashboard.html';
+                    } else {
+                        // This case should not happen if the login attempt was correct
+                        alert("Authentication failed: User is not recognized as Master Admin.");
+                        auth.signOut();
+                    }
+                })
+                .catch((error) => {
+                    // Handle case where the user might not be set up in Auth yet, or credentials are wrong
+                    alert(`Admin Login Failed: ${error.message}`);
+                });
+
+        } else if (email === MASTER_ADMIN_EMAIL) {
+            // If it's the admin email but not the default password, try standard login
+             auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Master Admin Login successful! Redirecting to dashboard.");
+                    window.location.href = 'master_admin_dashboard.html';
+                })
+                .catch((error) => {
+                    alert(`Admin Login Failed: ${error.message}`);
+                });
+        } else {
+             alert("Only the Master Admin can log in here. Please use the Saloon Owner or Customer portals.");
+        }
+    });
+</script>
 </body>
 </html>
