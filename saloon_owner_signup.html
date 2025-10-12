@@ -1,65 +1,193 @@
-/**
- * Firebase Cloud Function: sendSms
- * Handles the secure server-side API call to Twilio for SMS notifications.
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Saloon Owner Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+        const functions = app.functions('us-central1');
+        const sendSmsFunction = functions.httpsCallable('sendSms');
+    </script>
+    
+    <style>
+        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
+        .btn-primary { background-color: var(--accent-blue); color: white; transition: background-color 0.2s; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; }
+        #payment-modal { background-color: rgba(0, 0, 0, 0.8); z-index: 100; }
+        .modal-content { background-color: #1F2937; }
+    </style>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-// CRITICAL FIX: Use the V1 module path to ensure compatibility.
-const functions = require("firebase-functions/v1");
-const Twilio = require("twilio");
-const admin = require("firebase-admin");
-admin.initializeApp();
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-white">ASAMS Owner Sign Up</h1>
+            <p class="text-sm text-gray-400 mt-2">Submit your saloon details to begin your 7-day free trial.</p>
+        </header>
 
-// NOTE: functions.setGlobalOptions IS REMOVED TO FIX TypeError.
+        <main>
+            <form id="signup-form" class="space-y-4">
+                <input type="text" id="owner-name" placeholder="Owner Full Name" class="input-style w-full" required>
+                <input type="text" id="saloon-name" placeholder="Saloon Name" class="input-style w-full" required>
+                <input type="text" id="address" placeholder="Saloon Address" class="input-style w-full" required>
+                <input type="email" id="email-address" placeholder="Login Email" class="input-style w-full" required>
+                <input type="tel" id="contact-number" placeholder="Contact Number (+92XXXXXXXXXX)" class="input-style w-full" pattern="^\+\d{10,14}$" title="Must be in +[countrycode][number] format (e.g., +923001234567)" required>
+                <input type="password" id="create-password" placeholder="Create Password" class="input-style w-full" required>
+                <p class="text-xs text-yellow-500">Contact Number is mandatory for SMS notifications.</p>
+                
+                <button type="submit" id="sign-up-button" class="w-full p-3 rounded-lg uppercase font-bold btn-primary">
+                    SUBMIT APPLICATION
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <a href="saloon_owner_login.html" class="text-gray-400 text-sm hover:text-white">Already have an account? Log In</a>
+            </div>
+        </main>
+    </div>
 
-// Load Twilio credentials from Firebase environment config for security
-const accountSid = functions.config().twilio.sid;
-const authToken = functions.config().twilio.auth_token;
-const twilioPhoneNumber = "+12294665689"; // Your Twilio Phone Number
+    <div id="payment-modal" class="fixed inset-0 hidden items-center justify-center p-4">
+        <div class="modal-content max-w-sm w-full p-6 rounded-xl shadow-2xl space-y-4">
+            <h3 class="text-xl font-bold text-white border-b pb-2 border-gray-700">
+                <i data-lucide="info" class="w-5 h-5 inline mr-2 text-yellow-400"></i>
+                7-Day Trial Information
+            </h3>
+            
+            <p class="text-gray-300">
+                You are on a **7 Day Free trial period**. To continue after the trial, you must pay the Monthly subscription fee of 
+                <span id="monthly-fee" class="font-bold text-xl text-green-400"></span>.
+            </p>
 
-// Initialize the Twilio client
-const client = new Twilio(accountSid, authToken);
+            <h4 class="text-lg font-semibold text-white mt-4">Payment Methods (Copy details):</h4>
+            
+            <div class="p-3 rounded-lg bg-gray-600">
+                <p class="font-semibold text-white">EasyPesa:</p>
+                <pre id="easypesa-details" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('easypesa-details')">
+                    <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
+                </button>
+            </div>
+            
+            <div class="p-3 rounded-lg bg-gray-600">
+                <p class="font-semibold text-white">JazzCash:</p>
+                <pre id="jazzcash-details" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('jazzcash-details')">
+                    <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
+                </button>
+            </div>
 
+            <button onclick="document.getElementById('payment-modal').classList.add('hidden')" class="w-full p-3 rounded-lg uppercase font-bold text-sm bg-red-600 text-white">
+                CLOSE
+            </button>
+        </div>
+    </div>
 
-/**
- * HTTPS Callable Function to send an SMS.
- */
-// FIX: Using runWith() to target Node.js 18 environment explicitly.
-exports.sendSms = functions
-    .runWith({ runtime: "nodejs18" })
-    .https.onCall(
-        async (data, context) => {
-        // 1. Authentication/Validation
-        if (!context.auth) {
-            throw new functions.https.HttpsError(
-                "unauthenticated",
-                "The function must be called by an authenticated user.",
-            );
-        }
-        if (!data.to || !data.body) {
-            throw new functions.https.HttpsError(
-                "invalid-argument",
-                "The function requires 'to' and 'body' parameters.",
-            );
-        }
+<script>
+    let adminSettings = {};
 
-        try {
-            const message = await client.messages.create({
-                body: data.body,
-                to: data.to,
-                from: twilioPhoneNumber,
+    // 1. Load Admin Settings (for subscription fee and payment details)
+    db.collection('settings').doc('admin').get()
+        .then(doc => {
+            if (doc.exists) {
+                adminSettings = doc.data();
+            }
+        })
+        .catch(error => {
+            console.error("Error loading admin settings:", error);
+        });
+
+    function copyPaymentDetails(elementId) {
+        const textToCopy = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert('Payment details copied!');
+        });
+    }
+
+    function showPaymentInfoPopup(fee, easypesa, jazzcash) {
+        document.getElementById('monthly-fee').innerText = `Rs ${fee}/month`;
+        document.getElementById('easypesa-details').innerText = easypesa;
+        document.getElementById('jazzcash-details').innerText = jazzcash;
+        
+        document.getElementById('payment-modal').classList.add('flex');
+        document.getElementById('payment-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('signup-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const ownerName = document.getElementById('owner-name').value;
+        const saloonName = document.getElementById('saloon-name').value;
+        const address = document.getElementById('address').value;
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('create-password').value;
+        const contactNumber = document.getElementById('contact-number').value; 
+        
+        // 1. Fetch Admin Settings and proceed
+        db.collection('settings').doc('admin').get()
+            .then(doc => {
+                if (!doc.exists) {
+                    throw new Error("Admin settings not configured. Please contact support.");
+                }
+                adminSettings = doc.data();
+
+                // 2. Create User in Firebase Auth
+                return auth.createUserWithEmailAndPassword(email, password);
+            })
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // 3. Save Application to Firestore (status: 'Pending')
+                return db.collection('applications').doc(user.uid).set({
+                    uid: user.uid,
+                    ownerName: ownerName,
+                    saloonName: saloonName,
+                    address: address,
+                    email: email,
+                    contactNumber: contactNumber,
+                    status: 'Pending', 
+                    logoUrl: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+            })
+            .then(() => {
+                // 4. Send SMS Notification to Saloon Owner
+                const ownerSmsBody = `Dear Saloon Owner, Your request for ASAMS account has been received, your application is being reviewed by the Master Admin. Thanks for using ASAMS Service. please do not reply to this message.`;
+                sendSmsFunction({ to: contactNumber, body: ownerSmsBody })
+                    .catch(err => console.error("Owner SMS failed on signup:", err));
+                
+                // 5. Send SMS Notification to Master Admin
+                if (adminSettings.adminContactNumber) {
+                    const adminSmsBody = `Dear Admin, ${ownerName} (${saloonName}) has applied for ASAMS account. Please review and approve the application.`;
+                    sendSmsFunction({ to: adminSettings.adminContactNumber, body: adminSmsBody })
+                        .catch(err => console.error("Admin SMS failed on signup:", err));
+                }
+
+                // 6. Show Payment Details Pop-up
+                showPaymentInfoPopup(
+                    adminSettings.subscriptionFee || 'N/A', 
+                    adminSettings.easyPesaDetails || 'N/A (Please set in Admin Panel)', 
+                    adminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)'
+                );
+            })
+            .catch((error) => {
+                alert(`Application submission failed: ${error.message}. Please try again.`);
+                console.error("Submission failed:", error);
             });
-
-            console.log(`Message sent to ${data.to}. SID: ${message.sid}`);
-            return {
-                success: true,
-                message: `SMS sent successfully. SID: ${message.sid}`,
-            };
-        } catch (error) {
-            console.error("Twilio SMS Error:", error);
-            throw new functions.https.HttpsError(
-                "internal",
-                "Failed to send SMS via Twilio.",
-                error.message,
-            );
-        }
     });
+
+    lucide.createIcons();
+</script>
+</body>
+</html>
