@@ -20,129 +20,116 @@
         const sendSmsFunction = functions.httpsCallable('sendSms');
     </script>
     <style>
-        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
-        .btn-primary { background-color: var(--accent-blue); color: white; transition: background-color 0.2s; }
-        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; }
-        #payment-modal { background-color: rgba(0, 0, 0, 0.8); z-index: 100; }
-        .modal-content { background-color: #1F2937; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: #F9FAFB; padding: 0.75rem; border-radius: 0.375rem; }
     </style>
 </head>
 <body class="bg-gray-900 font-sans text-gray-100">
     <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-white">ASAMS Owner Sign Up</h1>
-            <p class="text-sm text-gray-400 mt-2">Submit your saloon details to begin your 7-day free trial.</p>
+        <header class="mb-8 border-b border-gray-700 pb-4">
+            <h1 class="text-3xl font-bold text-white mb-2">Saloon Owner Sign Up</h1>
+            <p class="text-gray-400">Register your saloon to start your 7-day free trial.</p>
         </header>
 
         <main>
             <form id="signup-form" class="space-y-4">
-                <input type="text" id="owner-name" placeholder="Owner Full Name" class="input-style w-full" required>
-                <input type="text" id="saloon-name" placeholder="Saloon Name" class="input-style w-full" required>
-                <input type="text" id="address" placeholder="Saloon Address" class="input-style w-full" required>
-                <input type="email" id="email-address" placeholder="Login Email" class="input-style w-full" required>
-                <input type="tel" id="contact-number" placeholder="Contact Number (+92XXXXXXXXXX)" class="input-style w-full" pattern="^\+92\d{10}$" title="Must be in +92xxxxxxxxxx format" required>
-                <input type="password" id="create-password" placeholder="Create Password" class="input-style w-full" required>
-                <p class="text-xs text-yellow-500">Contact Number is mandatory for SMS notifications.</p>
-                
-                <button type="submit" class="w-full p-3 rounded-lg uppercase font-bold btn-primary">
+                <input type="text" id="owner-name" placeholder="Owner Full Name" required class="input-style w-full">
+                <input type="text" id="saloon-name" placeholder="Saloon Name" required class="input-style w-full">
+                <input type="email" id="email-address" placeholder="Login Email Address" required class="input-style w-full">
+                <input type="tel" id="contact-number" placeholder="Contact Number (e.g., +923001234567)" pattern="^\+\d{10,14}$" title="Must be in +[countrycode][number] format (e.g., +923001234567)" required class="input-style w-full">
+                <input type="password" id="password" placeholder="Password" required class="input-style w-full">
+                <input type="password" id="confirm-password" placeholder="Confirm Password" required class="input-style w-full">
+                <textarea id="address" placeholder="Saloon Address" rows="3" required class="input-style w-full"></textarea>
+
+                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg bg-green-600 text-white hover:bg-green-700">
                     SUBMIT APPLICATION
                 </button>
             </form>
-            <div class="mt-4 text-center">
-                <a href="saloon_owner_login.html" class="text-gray-400 text-sm hover:text-white">Already have an account? Log In</a>
+
+            <div class="mt-6 text-center">
+                <a href="saloon_owner_login.html" class="text-gray-400 text-sm hover:text-white transition duration-200">
+                    Already have an account? <span class="underline">Log In</span>
+                </a>
             </div>
         </main>
+        
     </div>
 
-    <div id="payment-modal" class="fixed inset-0 hidden items-center justify-center p-4">
-        <div class="modal-content max-w-sm w-full p-6 rounded-xl shadow-2xl space-y-4">
-            <h3 class="text-xl font-bold text-white border-b pb-2 border-gray-700">
-                <i data-lucide="info" class="w-5 h-5 inline mr-2 text-yellow-400"></i>
-                7-Day Trial Information
-            </h3>
-            
-            <p class="text-gray-300">
-                You are on a **7 Day Free trial period**. To continue after the trial, you must pay the Monthly subscription fee of 
-                <span id="monthly-fee" class="font-bold text-xl text-green-400"></span>.
-            </p>
+    <div id="payment-popup" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full space-y-4">
+            <h2 class="text-xl font-bold text-yellow-400">IMPORTANT: Next Steps</h2>
+            <p class="text-sm">Your application has been received and is under review. You are currently on a **7-day free trial**.</p>
+            <p class="text-sm font-semibold">Subscription Fee: <span id="popup-fee" class="text-lg text-green-400"></span></p>
 
-            <h4 class="text-lg font-semibold text-white mt-4">Payment Methods (Copy details):</h4>
-            
-            <div class="p-3 rounded-lg bg-gray-600">
-                <p class="font-semibold text-white">EasyPesa:</p>
-                <pre id="easypesa-details" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
-                <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('easypesa-details')">
-                    <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
-                </button>
+            <div class="border-t border-gray-700 pt-3 space-y-2">
+                <h3 class="text-md font-bold text-white">Payment Details:</h3>
+                <p class="text-xs text-gray-300"><span class="font-bold">EasyPesa:</span> <span id="popup-easypesa"></span></p>
+                <p class="text-xs text-gray-300"><span class="font-bold">JazzCash:</span> <span id="popup-jazzcash"></span></p>
             </div>
             
-            <div class="p-3 rounded-lg bg-gray-600">
-                <p class="font-semibold text-white">JazzCash:</p>
-                <pre id="jazzcash-details" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
-                <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('jazzcash-details')">
-                    <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
-                </button>
-            </div>
-
-            <button onclick="document.getElementById('payment-modal').classList.add('hidden')" class="w-full p-3 rounded-lg uppercase font-bold text-sm bg-red-600 text-white">
-                CLOSE
+            <button onclick="document.getElementById('payment-popup').classList.add('hidden')" class="w-full p-3 rounded-full uppercase text-sm font-bold bg-blue-600 text-white hover:bg-blue-700">
+                CLOSE & PROCEED TO LOGIN
             </button>
         </div>
     </div>
 
 <script>
-    function copyPaymentDetails(elementId) {
-        const textToCopy = document.getElementById(elementId).innerText;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert('Payment details copied!');
+    let adminSettings = {};
+
+    // 1. Load Admin Settings (for subscription fee and payment details)
+    db.collection('settings').doc('admin').get()
+        .then(doc => {
+            if (doc.exists) {
+                adminSettings = doc.data();
+            }
+        })
+        .catch(error => {
+            console.error("Error loading admin settings:", error);
         });
+
+    function showPaymentInfoPopup(fee, easyPesa, jazzCash) {
+        document.getElementById('popup-fee').innerText = `Rs ${fee} / month`;
+        document.getElementById('popup-easypesa').innerText = easyPesa;
+        document.getElementById('popup-jazzcash').innerText = jazzCash;
+        document.getElementById('payment-popup').classList.remove('hidden');
     }
 
-    function showPaymentInfoPopup(fee, easypesa, jazzcash) {
-        document.getElementById('monthly-fee').innerText = `Rs ${fee}/month`;
-        document.getElementById('easypesa-details').innerText = easypesa;
-        document.getElementById('jazzcash-details').innerText = jazzcash;
-        
-        document.getElementById('payment-modal').classList.add('flex');
-        document.getElementById('payment-modal').classList.remove('hidden');
-    }
-
-    document.getElementById('signup-form').addEventListener('submit', (e) => {
+    const signupForm = document.getElementById('signup-form');
+    
+    signupForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
         const ownerName = document.getElementById('owner-name').value;
         const saloonName = document.getElementById('saloon-name').value;
-        const address = document.getElementById('address').value;
         const email = document.getElementById('email-address').value;
-        const password = document.getElementById('create-password').value;
-        const contactNumber = document.getElementById('contact-number').value; 
-        
-        let adminSettings = {};
-        
-        // 1. Fetch Admin Settings
-        db.collection('settings').doc('admin').get()
-            .then(doc => {
-                if (!doc.exists) {
-                    throw new Error("Admin settings not configured. Please contact support.");
-                }
-                adminSettings = doc.data();
+        const contactNumber = document.getElementById('contact-number').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const address = document.getElementById('address').value;
 
-                // 2. Create User in Firebase Auth
-                return auth.createUserWithEmailAndPassword(email, password);
-            })
+        // Simple validation
+        if (password !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
+        // 1. Create User in Firebase Authentication
+        auth.createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 const user = userCredential.user;
                 
-                // 3. Save Application to Firestore (status: 'Pending')
+                // 2. Save Saloon Application Details to Firestore
                 return db.collection('applications').doc(user.uid).set({
                     uid: user.uid,
                     ownerName: ownerName,
                     saloonName: saloonName,
-                    address: address,
                     email: email,
                     contactNumber: contactNumber,
-                    status: 'Pending', 
+                    address: address,
+                    status: 'Pending', // Initial status is Pending
+                    role: 'owner',
+                    trialStart: null,
+                    trialEnd: null,
                     logoUrl: '',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 });
@@ -150,23 +137,26 @@
             .then(() => {
                 // 4. Send SMS Notification to Saloon Owner
                 const ownerSmsBody = `Dear Saloon Owner, Your request for ASAMS account has been received, your application is being reviewed by the Master Admin. Thanks for using ASAMS Service. please do not reply to this message.`;
-                sendSmsFunction({ to: contactNumber, body: ownerSmsBody });
+                sendSmsFunction({ to: contactNumber, body: ownerSmsBody })
+                    .catch(err => console.error("Owner SMS failed on signup:", err)); // FIX: Added error handling
                 
                 // 5. Send SMS Notification to Master Admin
                 if (adminSettings.adminContactNumber) {
                     const adminSmsBody = `Dear Admin, ${ownerName} (${saloonName}) has applied for ASAMS account. Please review and approve the application.`;
-                    sendSmsFunction({ to: adminSettings.adminContactNumber, body: adminSmsBody });
+                    sendSmsFunction({ to: adminSettings.adminContactNumber, body: adminSmsBody })
+                        .catch(err => console.error("Admin SMS failed on signup:", err)); // FIX: Added error handling
                 }
 
                 // 6. Show Payment Details Pop-up
                 showPaymentInfoPopup(
-                    adminSettings.subscriptionFee || 'N/A', 
+                    adminSettings.subscriptionFee || '499', // Default to 499 if not set
                     adminSettings.easyPesaDetails || 'N/A (Please set in Admin Panel)', 
                     adminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)'
                 );
             })
             .catch((error) => {
                 alert(`Error: ${error.message}. Please check console.`);
+                console.error("Signup failed:", error);
             });
     });
 
