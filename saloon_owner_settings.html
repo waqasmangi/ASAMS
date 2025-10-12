@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Saloon Owner Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Gold Gradient Button Class */
+        .gold-gradient-button {
+            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
+            color: var(--darker-bg); 
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom Input/Settings Row Styling */
+        .settings-row {
+            background-color: var(--dark-navy);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Input Styling */
+        .custom-input {
+            background-color: var(--darker-bg); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill-shaped */
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        /* Custom Font Classes */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Toggle Switch (Simulated) */
+        .toggle-switch {
+            width: 40px;
+            height: 20px;
+            border-radius: 10px;
+            background-color: #4B5563; /* Gray for off */
+            position: relative;
+            cursor: pointer;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: white;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .toggle-switch.on {
+            background-color: var(--gold);
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="flex justify-between items-center pt-2 pb-6">
+            <div class="flex items-center space-x-2 text-white">
+                <div class="relative">
+                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
+                </div>
+                <div class="flex flex-col items-start">
+                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+                    <span class="text-xs tracking-wider uppercase text-gray-400">OWNER PORTAL</span>
+                </div>
+            </div>
+            <i data-lucide="settings" class="w-6 h-6 text-white cursor-pointer" style="color: var(--gold);"></i>
+        </header>
+
+        <form class="flex-grow pb-24">
+            <h1 class="text-2xl font-bold text-white tracking-wider mb-6 font-cinzel">
+                SALOON SETTINGS
+            </h1>
+
+            <section class="mb-6">
+                <div class="settings-row flex-col items-start space-y-4">
+                    <div class="flex items-center space-x-3 w-full">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 border-2" style="border-color: var(--gold);"></div>
+                        <input type="text" value="The Gentleman's Cut" class="custom-input bg-gray-800 flex-grow" />
+                    </div>
+                    <div class="w-full flex items-center space-x-2">
+                        <input type="tel" value="Contact Phone Number" class="custom-input bg-gray-800 flex-grow" />
+                        <i data-lucide="phone" class="w-5 h-5" style="color: var(--gold);"></i>
+                    </div>
+                    <button class="px-3 py-1 text-xs font-semibold rounded-full border text-white" style="border-color: var(--gold); background-color: var(--darker-bg);">
+                        Upload Logo
+                    </button>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-2">STAFF PROFILE</h2>
+                <div class="settings-row">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-gray-500"></div>
+                        <div>
+                            <p class="text-white font-semibold">Saloon Mike</p>
+                            <p class="text-xs text-gray-400">Saloon Master</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="toggle-switch on"></div>
+                        <i data-lucide="trash-2" class="w-5 h-5 text-red-500 cursor-pointer"></i>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-2">SERVICES / PRICINGS</h2>
+                
+                <div class="settings-row">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-gray-500"></div>
+                        <div>
+                            <p class="text-white font-semibold">Beard Trim <span class="text-sm ml-1 text-green-400">$20</span></p>
+                            <p class="text-xs text-gray-400">Styling</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-red-400">Discounted Price</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5 ml-auto" style="color: var(--gold);"></i>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-gray-500"></div>
+                        <div>
+                            <p class="text-white font-semibold">Styled Cut <span class="text-sm ml-1 text-green-400">$30</span></p>
+                            <p class="text-xs text-gray-400">30 min</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-green-400">8% Discount Pay</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5 ml-auto" style="color: var(--gold);"></i>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="mb-6">
+                <div class="settings-row">
+                    <div>
+                        <i data-lucide="wallet" class="w-5 h-5 mr-2 inline" style="color: var(--gold);"></i>
+                        <span class="text-white font-semibold">Cash Only Payments</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <p class="text-xs text-gray-400">Currently: Cash Only</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5" style="color: var(--gold);"></i>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <i data-lucide="chair" class="w-5 h-5 mr-2 inline" style="color: var(--gold);"></i>
+                        <span class="text-white font-semibold">Available Seats / Slots</span>
+                        <p class="text-xs text-gray-400">Set Duration in Minutes</p>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <p class="text-xs text-gray-400">4 Seats | 30 min slots</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5" style="color: var(--gold);"></i>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <i data-lucide="calendar-x" class="w-5 h-5 mr-2 inline" style="color: var(--gold);"></i>
+                        <span class="text-white font-semibold">Set Unavailability</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <p class="text-xs text-red-400">Dec 25: CLOSED</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5" style="color: var(--gold);"></i>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <i data-lucide="clipboard-list" class="w-5 h-5 mr-2 inline" style="color: var(--gold);"></i>
+                        <span class="text-white font-semibold">Terms & Conditions</span>
+                        <p class="text-xs text-gray-400">Privacy Policy</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5" style="color: var(--gold);"></i>
+                </div>
+                
+            </section>
+
+            <div class="p-4" style="background-color: var(--darker-bg); margin: -1rem; margin-top: 1rem; border-radius: 0.5rem;">
+                <button type="submit" class="w-full p-4 rounded-full uppercase font-bold text-lg gold-gradient-button">
+                    SAVE ALL CHANGES
+                </button>
+            </div>
+        </form>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="users" class="w-5 h-5 mb-1"></i>
+                PEOPLE
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                MESSAGES
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
+                REPORTS
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>

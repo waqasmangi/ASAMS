@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Customer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Gold Gradient Button Class */
+        .gold-gradient-button {
+            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
+            color: var(--darker-bg); 
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .gold-gradient-button:hover {
+            opacity: 0.9;
+        }
+
+        /* Input Styling */
+        .custom-select {
+            background-color: var(--dark-navy); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            border-radius: 9999px; /* Pill-shaped */
+            font-size: 0.875rem;
+            width: 100%;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Icon Button Styling */
+        .icon-button {
+            background-color: var(--dark-navy);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 0.75rem;
+            padding: 1rem 0;
+            transition: background-color 0.2s;
+        }
+        .icon-button:hover {
+            background-color: var(--darker-bg);
+        }
+        .icon-button.selected {
+            border-color: var(--gold);
+            border-width: 2px;
+        }
+
+        /* Custom Font Classes */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="flex justify-between items-center pt-2 pb-4">
+            <div class="flex items-center space-x-2 text-white">
+                <div class="relative">
+                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
+                </div>
+                <div class="flex flex-col items-start">
+                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+                    <span class="text-xs tracking-wider uppercase text-gray-400">APPOINTMENT SYSTEM</span>
+                </div>
+            </div>
+            
+            <i data-lucide="settings" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
+        </header>
+
+        <div class="pb-6 pt-2 flex justify-between items-start" style="background-color: var(--darker-bg); padding: 1rem; margin: -1rem; margin-bottom: 1rem; border-radius: 0.5rem;">
+            <div class="flex items-start space-x-3">
+                <div class="w-12 h-12 rounded-full bg-gray-600 border-2" style="border-color: var(--gold);"></div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wider">
+                        WELCOME BACK, JOHN!
+                    </h1>
+                    <p class="text-sm text-gray-400">Your next appointment: Today, 2:30 PM with Barber Mike</p>
+                </div>
+            </div>
+            <button class="px-3 py-1 text-xs font-semibold rounded-full border text-black" style="background-color: var(--gold); border-color: var(--gold);">
+                VIEW DETAILS
+            </button>
+        </div>
+
+        <section class="mb-8 mt-4">
+            <h2 class="text-xl font-bold text-white tracking-wider mb-6 font-cinzel text-center">
+                BOOK A NEW APPOINTMENT
+            </h2>
+
+            <form action="#" method="POST" class="space-y-4">
+                <div class="flex justify-around items-center mb-6">
+                    <button type="button" class="icon-button selected w-1/4 flex flex-col items-center">
+                        <i data-lucide="scissors" class="w-8 h-8 mb-1" style="color: var(--gold);"></i>
+                        <span class="text-xs text-white">HAIRCUT</span>
+                    </button>
+                    <button type="button" class="icon-button w-1/4 flex flex-col items-center">
+                        <i data-lucide="trowel" class="w-8 h-8 mb-1" style="color: var(--gold);"></i>
+                        <span class="text-xs text-white">BEARD TRIM</span>
+                    </button>
+                    <button type="button" class="icon-button w-1/4 flex flex-col items-center">
+                        <i data-lucide="wind" class="w-8 h-8 mb-1" style="color: var(--gold);"></i>
+                        <span class="text-xs text-white">STYLING</span>
+                    </button>
+                </div>
+
+                <div class="relative flex items-center">
+                    <select class="custom-select pr-10" style="background-color: var(--darker-bg);">
+                        <option>Select Service</option>
+                        <option>Haircut - $25</option>
+                        <option>Beard Trim - $15</option>
+                        <option>Styling - $30</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <div class="relative w-1/2 flex items-center">
+                        <select class="custom-select pr-10" style="background-color: var(--darker-bg);">
+                            <option>Choose Barber</option>
+                            <option>Barber Mike</option>
+                            <option>Barber Sarah</option>
+                        </select>
+                        <i data-lucide="user" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <div class="relative w-1/2 flex items-center">
+                        <select class="custom-select pr-10" style="background-color: var(--darker-bg);">
+                            <option>Time Slots</option>
+                            <option>10:00 AM</option>
+                            <option>11:00 AM</option>
+                        </select>
+                        <i data-lucide="clock" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <a href="customer_find_saloons.html" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-sm gold-gradient-button text-center block">
+                    FIND AVAILABLE SLOTS
+                </a>
+            </form>
+        </section>
+
+        <section class="mt-8">
+            <h2 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4">YOUR UPCOMING APPOINTMENTS</h2>
+            <div class="space-y-4">
+                
+                <div class="p-4 rounded-xl shadow-md border-l-4" style="background-color: var(--dark-navy); border-color: var(--gold);">
+                    <p class="text-sm font-semibold text-white mb-1">Tomorrow, 10:00 AM - Haircut</p>
+                    <p class="text-xs text-gray-400">with BARBER SARAH</p>
+                    <div class="flex justify-end mt-2">
+                         <a href="customer_appointment_details.html" class="text-xs px-3 py-1 rounded-full border text-white font-semibold" style="border-color: var(--gold); background-color: var(--darker-bg);">
+                            CANCEL
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="p-4 rounded-xl shadow-md" style="background-color: var(--dark-navy);">
+                    <p class="text-sm font-semibold text-white mb-1">Fri, Dec 15, 2:30 PM - Beard Trim Mark</p>
+                    <p class="text-xs text-gray-400">with BARBER MARK</p>
+                </div>
+            </div>
+        </section>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
+            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                PROFILE
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                MESSAGES
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="star" class="w-5 h-5 mb-1"></i>
+                REVIEWS
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>

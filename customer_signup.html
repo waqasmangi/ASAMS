@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Customer Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Gold Gradient Button Class */
+        .gold-gradient-button {
+            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
+            color: var(--darker-bg);
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Input Styling */
+        .custom-input {
+            background-color: var(--dark-navy); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            border-radius: 9999px; /* Pill-shaped */
+            font-size: 0.875rem;
+        }
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="text-center py-6">
+            <div class="flex flex-col items-center justify-center">
+                <div class="flex items-center space-x-2 text-white">
+                    <div class="relative">
+                        <i data-lucide="scissors" class="w-10 h-10" style="color: var(--gold);"></i>
+                        <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-cinzel text-xs" style="color: var(--darker-bg);">AS</span>
+                    </div>
+                    <div class="flex flex-col items-start">
+                        <span class="font-cinzel text-xl tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+                        <span class="text-xs tracking-wider uppercase" style="color: #A0AEC0;">APPOINTMENT SYSTEM</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="bg-gray-800 p-6 rounded-xl shadow-2xl flex-grow" style="background-color: var(--darker-bg);">
+            
+            <h1 class="text-2xl font-bold text-white text-center mb-6 font-cinzel tracking-wider">
+                CREATE YOUR ACCOUNT
+            </h1>
+
+            <form action="#" method="POST" class="space-y-4">
+                
+                <div class="relative">
+                    <input type="text" id="full-name" name="full_name" required placeholder="YOUR FULL NAME"
+                        class="w-full custom-input"
+                    >
+                </div>
+
+                <div class="relative">
+                    <input type="email" id="email-address" name="email" required placeholder="EMAIL ADDRESS"
+                        class="w-full custom-input"
+                    >
+                    <i data-lucide="chevron-up" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                </div>
+                
+                <div class="relative">
+                    <input type="password" id="create-password" name="create_password" required placeholder="CREATE PASSWORD"
+                        class="w-full custom-input"
+                    >
+                </div>
+                
+                <div class="relative">
+                    <input type="password" id="confirm-password" name="confirm_password" required placeholder="CONFIRM PASSWORD"
+                        class="w-full custom-input"
+                    >
+                    <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                </div>
+
+                <div class="relative">
+                    <input type="tel" id="contact-number" name="contact_number" required placeholder="CONTACT NUMBER"
+                        class="w-full custom-input"
+                    >
+                    <i data-lucide="phone" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style="color: var(--gold);"></i>
+                    <p class="text-xs text-center text-gray-400 mt-2">Mandatory for SMS notifications</p> 
+                </div>
+
+                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
+                    SIGN UP
+                </button>
+            </form>
+
+            <div class="text-center mt-6">
+                <a href="customer_login.html" class="text-gray-400 text-sm hover:text-white transition duration-200">
+                    Already have an account? <span class="underline">Log In</span>
+                </a>
+            </div>
+
+        </main>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
+            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                PROFILE
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                MESSAGES
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="star" class="w-5 h-5 mb-1"></i>
+                REVIEWS
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>

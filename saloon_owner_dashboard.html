@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Saloon Owner Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Font Classes */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="flex justify-between items-center pt-2 pb-4">
+            <div class="flex items-center space-x-2 text-white">
+                <div class="relative">
+                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
+                </div>
+                <div class="flex flex-col items-start">
+                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+                    <span class="text-xs tracking-wider uppercase text-gray-400">OWNER PORTAL</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <i data-lucide="settings" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
+                <i data-lucide="menu" class="w-6 h-6 text-white cursor-pointer"></i>
+            </div>
+        </header>
+
+        <div class="pb-6 flex justify-between items-center" style="background-color: var(--darker-bg); padding: 1rem; margin: -1rem; border-radius: 0.5rem;">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gray-600 border-2" style="border-color: var(--gold);"></div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wider">
+                        WELCOME BACK, OWNER!
+                    </h1>
+                    <p class="text-sm text-gray-400">Today's Appointments: 14 | Total Revenue: $2,200</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="mb-8 mt-6">
+            <h2 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4 hidden">QUICK ACTIONS</h2>
+            <div class="grid grid-cols-4 gap-4 text-center">
+                
+                <a href="#" class="flex flex-col items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                    <i data-lucide="calendar-check" class="w-6 h-6 mb-1" style="color: var(--gold);"></i>
+                    <span class="text-xs text-white">APPOINTMENTS</span>
+                </a>
+                
+                <a href="saloon_owner_settings.html" class="flex flex-col items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                    <i data-lucide="store" class="w-6 h-6 mb-1" style="color: var(--gold);"></i>
+                    <span class="text-xs text-white">MANAGE SALOON</span>
+                </a>
+                
+                <a href="#" class="flex flex-col items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                    <i data-lucide="users" class="w-6 h-6 mb-1" style="color: var(--gold);"></i>
+                    <span class="text-xs text-white">MANAGE STAFF</span>
+                </a>
+                
+                <a href="#" class="flex flex-col items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 mb-1" style="color: var(--gold);"></i>
+                    <span class="text-xs text-white">REPORTS</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4">DASHBOARD OVERVIEW</h2>
+            <div class="flex justify-between space-x-4">
+                
+                <div class="w-1/2 p-4 rounded-xl shadow-md border-t-4" style="background-color: var(--dark-navy); border-color: var(--gold);">
+                    <p class="text-gray-400 text-sm mb-2">REVENUE TODAY:</p>
+                    <div class="flex items-end justify-between">
+                        <p class="text-xl font-bold text-white">Rs. 2,250</p>
+                        <i data-lucide="trending-up" class="w-5 h-5" style="color: var(--gold);"></i>
+                    </div>
+                </div>
+
+                <div class="w-1/2 p-4 rounded-xl shadow-md border-t-4" style="background-color: var(--dark-navy); border-color: var(--gold);">
+                    <p class="text-gray-400 text-sm mb-2">NEXT APPOINTMENT:</p>
+                    <div class="flex items-end justify-between">
+                        <p class="text-xl font-bold text-white">10:00 AM</p>
+                        <i data-lucide="calendar" class="w-5 h-5" style="color: var(--gold);"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Shave (John D.)</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4">RECENT ACTIVITY LOG</h2>
+            <div class="space-y-4">
+                
+                <div class="flex items-start space-x-3 p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                    <div class="w-8 h-8 rounded-full bg-gray-700"></div> <div class="flex-grow">
+                        <p class="text-white text-sm font-semibold">
+                            RERGEE FAGD & SERVICES
+                        </p>
+                        <p class="text-xs text-gray-400">HEARD TRIM - $30</p>
+                        <p class="text-xs text-gray-500">BARBER ARN</p>
+                    </div>
+                    <i data-lucide="trending-up" class="w-5 h-5 mt-1" style="color: var(--gold);"></i>
+                </div>
+                
+                <div class="flex items-start space-x-3 p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                    <div class="w-8 h-8 rounded-full bg-gray-700"></div> <div class="flex-grow">
+                        <p class="text-white text-sm font-semibold">
+                            Appointment Booked: "John D - Chisen added"
+                        </p>
+                        <p class="text-xs text-gray-400">Staff Update: Bark's the Beard Trim</p>
+                        <p class="text-xs text-gray-500">Bantjah Expired</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
+            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="users" class="w-5 h-5 mb-1"></i>
+                PEOPLE
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                MESSAGES
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
+                REPORTS
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>

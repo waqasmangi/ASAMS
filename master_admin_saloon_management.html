@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Master Admin Saloon Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Gold Gradient Button Class */
+        .gold-gradient-button {
+            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
+            color: var(--darker-bg); 
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Input Styling */
+        .custom-input {
+            background-color: var(--dark-navy); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            border-radius: 9999px; /* Pill-shaped */
+            font-size: 0.875rem;
+        }
+
+        /* Custom Font Classes */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="flex justify-between items-center pt-2 pb-4">
+            <div class="flex items-center space-x-2 text-white">
+                <div class="relative">
+                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
+                </div>
+                <div class="flex flex-col items-start">
+                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <span class="text-xs uppercase font-semibold tracking-wider px-3 py-1 rounded-full hidden sm:inline" style="background-color: var(--dark-navy); color: var(--gold);">
+                    MASTER ADMIN PORTAL
+                </span>
+                <i data-lucide="settings" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
+            </div>
+        </header>
+
+        <main class="flex-grow pb-24">
+            <h1 class="text-2xl font-bold text-white tracking-wider mb-6 font-cinzel">
+                ADD NEW SALOONS
+            </h1>
+
+            <section class="mb-8 p-4 rounded-xl" style="background-color: var(--darker-bg);">
+                <form action="#" method="POST" class="space-y-4">
+                    
+                    <div class="relative">
+                        <input type="text" id="saloon-name" name="saloon_name" required placeholder="Saloon Name"
+                            class="w-full custom-input"
+                        >
+                    </div>
+
+                    <div class="relative">
+                        <input type="email" id="owner-email" name="owner_email" required placeholder="Owner Email"
+                            class="w-full custom-input"
+                        >
+                        <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                    </div>
+
+                    <div class="relative p-4 rounded-xl text-sm" style="background-color: var(--dark-navy);">
+                        <div class="flex justify-between items-center">
+                            <label for="subscription-plan" class="text-gray-400">Subscription Plan</label>
+                            <span class="text-white font-semibold">Premium (Rs. 499/month pkr)</span>
+                            <i data-lucide="more-horizontal" class="w-5 h-5 text-gray-400 cursor-pointer"></i>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 flex items-center">
+                            <i data-lucide="info" class="w-4 h-4 mr-1 text-yellow-500"></i>
+                            New saloons get a 7-day free trial before subscription is required[cite: 1].
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
+                        CREATE SALOON ACCOUNT
+                    </button>
+                </form>
+
+                <div class="mt-8 pt-4 border-t border-gray-700">
+                    <h3 class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Subscription Payment Info (Cash Only)</h3>
+                    <p class="text-xs text-gray-400 mb-3">
+                        Subscription is **Rs 499/month PKR** (changeable by admin)[cite: 1, 31]. Owners should pay and send a screenshot to the Admin's WhatsApp number.
+                    </p>
+                    
+                    <div class="p-3 rounded-lg mb-2" style="background-color: #1C312E;">
+                        <p class="text-sm font-semibold text-green-400">EasyPesa Account</p>
+                        <p class="text-white text-xs">A/C Holder: Master Admin Name</p>
+                        <p class="text-white text-xs">A/C Number: 0345-1234567</p>
+                    </div>
+
+                    <div class="p-3 rounded-lg" style="background-color: #311C21;">
+                        <p class="text-sm font-semibold text-red-400">Jazz Cash Account</p>
+                        <p class="text-white text-xs">A/C Holder: Master Admin Name</p>
+                        <p class="text-white text-xs">A/C Number: 0300-9876543</p>
+                    </div>
+                </div>
+            </section>
+
+
+            <section>
+                <h2 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4">LIST OF ACTIVE SALOONS</h2>
+                <div class="space-y-3">
+                    
+                    <div class="flex justify-between items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold" style="color: var(--gold);">LOGO</div>
+                            <div>
+                                <p class="text-white font-semibold">The Gentleman's Cut - Metroville</p>
+                                <p class="text-xs text-gray-400">Owner: Naa!n@ddt.Email</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-1 text-xs font-bold rounded-full border" style="border-color: var(--gold); color: var(--gold);">EDIT</button>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold" style="color: var(--gold);">LOGO</div>
+                            <div>
+                                <p class="text-white font-semibold">Mike's Modern Cuts</p>
+                                <p class="text-xs text-gray-400">Owner: Nai (Rs. 499/month)</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-1 text-xs font-bold rounded-full border" style="border-color: var(--gold); color: var(--gold);">EDIT</button>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl border-l-4" style="background-color: var(--dark-navy); border-color: #63E6BE;">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold" style="color: var(--gold);">LOGO</div>
+                            <div>
+                                <p class="text-white font-semibold">Active (Trial - Premium)</p>
+                                <p class="text-xs text-green-400">7 Days Left</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-1 text-xs font-bold rounded-full border" style="border-color: var(--gold); color: var(--gold);">EDIT</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase">
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
+                <i data-lucide="store" class="w-5 h-5 mb-1"></i>
+                SALOONS
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
+                REPORTS
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
+                <i data-lucide="more-horizontal" class="w-5 h-5 mb-1"></i>
+                MORE
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>

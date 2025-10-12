@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Book Appointment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Branding */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25; 
+        }
+
+        /* Custom Gold Gradient Button Class */
+        .gold-gradient-button {
+            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
+            color: var(--darker-bg); 
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .gold-gradient-button:hover {
+            opacity: 0.9;
+        }
+
+        /* Icon Button Styling */
+        .icon-button {
+            background-color: var(--dark-navy);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 0.75rem;
+            padding: 1rem 0;
+            transition: background-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .icon-button.selected {
+            border-color: var(--gold);
+            border-width: 2px;
+        }
+
+        /* Time Slot Button Styling */
+        .time-slot-button {
+            background-color: var(--dark-navy);
+            color: white;
+            padding: 0.75rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+        .time-slot-button.selected {
+            background-color: var(--gold);
+            color: var(--darker-bg);
+            font-weight: 700;
+        }
+
+        /* Custom Font Classes */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+
+    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+
+        <header class="flex items-center pt-2 pb-6">
+            <a href="customer_find_saloons.html" class="mr-3 text-gray-400 hover:text-white">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </a>
+            <div class="flex items-center space-x-2 text-white flex-grow">
+                <div class="relative">
+                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
+                </div>
+                <div class="flex flex-col items-start">
+                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+                </div>
+            </div>
+            <i data-lucide="settings" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
+        </header>
+
+        <main class="flex-grow pb-24">
+            <h1 class="text-2xl font-bold text-white tracking-wider mb-6 font-cinzel text-center">
+                BOOK YOUR APPOINTMENT
+            </h1>
+
+            <form action="customer_appointment_confirmation.html" method="POST" class="space-y-6">
+
+                <section class="p-4 rounded-xl" style="background-color: var(--darker-bg);">
+                    <h2 class="text-lg font-bold text-white mb-4 uppercase">1. SELECT SERVICE</h2>
+                    <div class="flex justify-between space-x-3">
+                        <button type="button" class="icon-button selected">
+                            <i data-lucide="scissors" class="w-8 h-8 mb-1" style="color: var(--gold);"></i>
+                            <span class="text-xs text-white">HAIRCUT</span>
+                        </button>
+                        <button type="button" class="icon-button">
+                            <i data-lucide="trowel" class="w-8 h-8 mb-1" style="color: var(--gold);"></i>
+                            <span class="text-xs text-white">BEARD TRIM</span>
+                        </button>
+                        <button type="button" class="icon-button">
+                            <i data-lucide="wind" class="w-8 h-8 mb-1" style="color: var(--gold);"></i>
+                            <span class="text-xs text-white">STYLING</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="p-4 rounded-xl" style="background-color: var(--darker-bg);">
+                    <h2 class="text-lg font-bold text-white mb-4 uppercase">2. CHOOSE DATE & BARBER</h2>
+                    
+                    <div class="flex space-x-2 mb-4">
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-full bg-gray-600 text-white border-2" style="border-color: var(--gold);">TODAY</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-full bg-gray-600 text-gray-300">TOMORROW, WEDNESDAY</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-full bg-gray-600 text-gray-300">OCT 25</button>
+                    </div>
+
+                    <div class="p-3 rounded-xl flex items-center space-x-3" style="background-color: var(--dark-navy);">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 border-2" style="border-color: var(--gold);"></div>
+                        <div>
+                            <p class="text-white font-semibold">The Gentleman's Cut</p>
+                            <p class="text-xs text-gray-400">Barber Mike (Selected)</p>
+                        </div>
+                        <i data-lucide="check-circle" class="w-6 h-6 ml-auto" style="color: var(--gold);"></i>
+                    </div>
+                </section>
+
+                <section class="p-4 rounded-xl" style="background-color: var(--darker-bg);">
+                    <h2 class="text-lg font-bold text-white mb-4 uppercase">3. SELECT TIME SLOT</h2>
+                    
+                    <div class="grid grid-cols-4 gap-3 text-sm">
+                        <button type="button" class="time-slot-button">10:00 AM</button>
+                        <button type="button" class="time-slot-button">10:00 AM</button>
+                        <button type="button" class="time-slot-button">11:00 AM</button>
+                        <button type="button" class="time-slot-button">10:00 AM</button>
+                        <button type="button" class="time-slot-button">10:00 AM</button>
+                        <button type="button" class="time-slot-button">1:00 PM</button>
+                        <button type="button" class="time-slot-button">11:30 PM</button>
+                        <button type="button" class="time-slot-button selected">1:00 PM</button>
+                        <button type="button" class="time-slot-button bg-gray-700 text-gray-500 cursor-not-allowed">2:30 PM</button>
+                    </div>
+                </section>
+
+                <div class="text-center mt-6">
+                    <p class="text-lg font-bold text-white">
+                        TOTAL: Haircut + Barber Mike @ 10:30 AM - $40
+                    </p>
+                </div>
+                
+                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
+                    CONFIRM BOOKING
+                </button>
+            </form>
+
+        </main>
+        
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
+        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                HOME
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
+                APPOINTMENTS
+            </a>
+            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                PROFILE
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                MESSAGES
+            </a>
+            <a href="#" class="flex flex-col items-center hover:text-white">
+                <i data-lucide="star" class="w-5 h-5 mb-1"></i>
+                REVIEWS
+            </a>
+        </nav>
+    </footer>
+
+</body>
+</html>
