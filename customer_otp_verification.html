@@ -12,10 +12,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+    </script>
     <style>
-        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
-        .btn-primary { background-color: var(--accent-blue); color: white; }
-        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;}
+        .btn-primary { background-color: #3B82F6; color: white; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: #F9FAFB; padding: 0.75rem; border-radius: 0.375rem; text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;}
     </style>
 </head>
 <body class="bg-gray-900 font-sans text-gray-100">
@@ -39,15 +43,9 @@
     </div>
 
 <script>
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-    
-    // Retrieve confirmationResult and user details from session storage
     const confirmationResult = window.confirmationResult;
     const tempUserDetails = JSON.parse(sessionStorage.getItem('tempUserDetails'));
 
-    // If data is missing, redirect back
     if (!confirmationResult || !tempUserDetails) {
         alert("Session expired or data missing. Please sign up again.");
         window.location.href = 'customer_signup.html';
@@ -62,30 +60,29 @@
         document.getElementById('verify-otp-button').innerText = 'VERIFYING...';
         document.getElementById('verify-otp-button').disabled = true;
 
-        // 1. Confirm the OTP
         confirmationResult.confirm(otpCode)
             .then((result) => {
-                // User is now signed in via phone number (UserCredential)
                 const user = result.user;
                 
-                // 2. Create the final account using Email/Password credentials (as required by previous steps)
+                // 1. Create Email/Password credentials and update the user object
                 return user.updateEmail(tempUserDetails.email)
                     .then(() => user.updatePassword(tempUserDetails.password))
                     .then(() => user);
             })
             .then((user) => {
-                // 3. Save additional user details to Firestore
+                // 2. Save final user details to Firestore
                 return db.collection('customers').doc(user.uid).set({
                     uid: user.uid,
                     fullName: tempUserDetails.fullName,
                     email: tempUserDetails.email,
                     contactNumber: tempUserDetails.contactNumber,
                     role: 'customer',
+                    isLocationSet: false, // NEW: Flag for first-time GPS check
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             })
             .then(() => {
-                // 4. Cleanup and Redirect
+                // 3. Cleanup and Redirect
                 sessionStorage.removeItem('tempUserDetails');
                 alert("Registration successful! You are now logged in.");
                 window.location.href = 'customer_dashboard.html';
@@ -95,9 +92,6 @@
                 errorMessage.classList.remove('hidden');
                 document.getElementById('verify-otp-button').innerText = 'VERIFY CODE';
                 document.getElementById('verify-otp-button').disabled = false;
-                
-                // NOTE: If the process fails after phone verification, the user remains signed in via phone number.
-                // The user must manually log out or the system must handle email/password linking errors.
             });
     });
 
