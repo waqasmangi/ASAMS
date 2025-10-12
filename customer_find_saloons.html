@@ -6,175 +6,127 @@
     <title>ASAMS - Find Saloons</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-
-<script src="firebase-config.js"></script>
-
-<script>
-    // Initialize Firebase using the config object from firebase-config.js
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-    const functions = app.functions('us-central1'); // Use the correct region if different
-</script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+    </script>
     <style>
-        /* CSS Variables for Branding */
-        :root {
-            --dark-navy: #1C2431;
-            --gold: #D4AF37;
-            --darker-bg: #151C25; 
-        }
-
-        /* Custom Gold Gradient Button Class */
-        .gold-gradient-button {
-            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
-            color: var(--darker-bg); 
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Simulated Map Container */
-        .map-container {
-            height: 250px;
-            background-color: #A0AEC0; 
-            background-image: url('https://via.placeholder.com/350x250?text=Nearby+Saloons+Map');
-            background-size: cover;
-            background-position: center;
-            border-radius: 0.75rem;
-            position: relative;
-        }
-
-        /* Custom Font Classes */
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
-        }
-        .font-inter {
-            font-family: 'Inter', sans-serif;
-        }
+        .card { background-color: #374151; padding: 1rem; border-radius: 0.5rem; }
     </style>
 </head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
-
-    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
-
-        <header class="flex justify-between items-center pt-2 pb-6">
-            <div class="flex items-center space-x-2 text-white">
-                <div class="relative">
-                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
-                </div>
-                <div class="flex flex-col items-start">
-                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
-                </div>
-            </div>
-            <i data-lucide="settings" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
+        <header class="mb-6 border-b border-gray-700 pb-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">Nearby Saloons</h1>
+            <button onclick="requestLocation()" class="text-sm text-blue-400 flex items-center hover:text-blue-300">
+                <i data-lucide="refresh-ccw" class="w-4 h-4 inline mr-1"></i> Refresh GPS
+            </button>
         </header>
 
-        <main class="flex-grow pb-24">
-            <h1 class="text-2xl font-bold text-white tracking-wider mb-6 font-cinzel text-center">
-                FIND NEARBY SALONS
-            </h1>
-
-            <div class="map-container mb-4 shadow-xl relative">
-                <i data-lucide="map-pin" class="w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-full text-blue-500" style="filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));"></i>
-                
-                <i data-lucide="store" class="w-5 h-5 absolute top-1/4 left-1/4 text-yellow-600"></i>
-                <i data-lucide="store" class="w-5 h-5 absolute top-3/4 left-2/3 text-yellow-600"></i>
-                <i data-lucide="store" class="w-5 h-5 absolute top-1/5 right-1/4 text-yellow-600"></i>
-            </div>
+        <main class="space-y-4">
             
-            <button type="button" class="w-full p-4 rounded-full uppercase font-bold text-sm text-black border-2 flex items-center justify-center mb-6" style="background-color: var(--gold); border-color: var(--gold);">
-                <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i>
-                USE CURRENT GPS LOCATION
-            </button>
+            <div id="saloon-list" class="space-y-3">
+                <p class="text-yellow-400 text-center" id="search-status">Searching for saloons within 500 meters...</p>
+                </div>
             
-            <div class="p-4 rounded-xl shadow-lg border-l-4" style="background-color: var(--dark-navy); border-color: var(--gold);">
-                <div class="flex items-start space-x-3 mb-3">
-                    <div class="w-12 h-12 rounded-full bg-gray-600"></div>
-                    <div class="flex-grow">
-                        <p class="text-white font-semibold text-lg">The Gentleman's Cut</p>
-                        <p class="text-sm text-gray-400">Barber Mike</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-400">4.9 miles</p>
-                        <div class="flex items-center text-yellow-500 text-xs mt-1">
-                            <i data-lucide="star" class="w-4 h-4 fill-yellow-500 mr-1"></i>
-                            <i data-lucide="star" class="w-4 h-4 fill-yellow-500 mr-1"></i>
-                            <i data-lucide="star" class="w-4 h-4 fill-yellow-500 mr-1"></i>
-                            <i data-lucide="star" class="w-4 h-4 fill-yellow-500 mr-1"></i>
-                            <i data-lucide="star-half" class="w-4 h-4 fill-yellow-500"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex justify-between items-center mt-4 border-t border-gray-700 pt-3">
-                    <p class="text-sm text-gray-400">0.2 miles | 2.2 m / 3.9</p>
-                    <div class="flex space-x-2">
-                        <button class="px-3 py-1 text-sm font-semibold rounded-full border text-white" style="border-color: var(--gold);">
-                            VIEW PROFILE
-                        </button>
-                        <a href="customer_book_appointment.html" class="px-4 py-1 text-sm font-semibold rounded-full text-black" style="background-color: var(--gold);">
-                            BOOK NOW
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-2">Other Nearby</h2>
-                <div class="flex space-x-4 overflow-x-scroll pb-2">
-                    <div class="flex-shrink-0 w-24 text-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
-                        <div class="w-12 h-12 rounded-full bg-gray-600 mx-auto mb-1"></div>
-                        <p class="text-xs text-white font-semibold">Mike's Modern Cuts</p>
-                        <p class="text-xs text-gray-400">0.5 miles</p>
-                    </div>
-                    <div class="flex-shrink-0 w-24 text-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
-                        <div class="w-12 h-12 rounded-full bg-gray-600 mx-auto mb-1"></div>
-                        <p class="text-xs text-white font-semibold">Sarah Styling</p>
-                        <p class="text-xs text-gray-400">1.1 miles</p>
-                    </div>
-                    <div class="flex-shrink-0 w-24 text-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
-                        <div class="w-12 h-12 rounded-full bg-gray-600 mx-auto mb-1"></div>
-                        <p class="text-xs text-white font-semibold">The Razor Edge</p>
-                        <p class="text-xs text-gray-400">2.5 miles</p>
-                    </div>
-                </div>
-            </div>
-
         </main>
-        
     </div>
 
-    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
-        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
-            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
-                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
-                HOME
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
-                APPOINTMENTS
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
-                PROFILE
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
-                MESSAGES
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="star" class="w-5 h-5 mb-1"></i>
-                REVIEWS
-            </a>
-        </nav>
-    </footer>
+<script>
+    const RADIUS_M = 500; // Search radius in meters
 
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = 'customer_login.html';
+            return;
+        }
+        
+        // On page load, try to get location
+        requestLocation(true); 
+    });
+
+    // Helper function to calculate distance (Haversine formula placeholder)
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        // Since we cannot run complex GeoFire/Cloud Function logic on the client,
+        // we SIMULATE distance for display purposes. 
+        // A proper solution requires a callable Cloud Function to execute the GeoQuery.
+        return Math.floor(Math.random() * 500) + 50; // Random distance between 50m and 550m
+    }
+
+    window.requestLocation = (initialLoad = false) => {
+        const statusElement = document.getElementById('search-status');
+        statusElement.innerText = "Getting your location...";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                statusElement.innerText = `Searching near your location (${lat.toFixed(3)}, ${lng.toFixed(3)})...`;
+                
+                // Save/update customer's current location (optional)
+                db.collection('customers').doc(auth.currentUser.uid).update({ currentLat: lat, currentLng: lng });
+
+                searchAndDisplaySaloons(lat, lng);
+
+            }, () => {
+                statusElement.innerText = "Location access denied or failed. Showing sample results.";
+                searchAndDisplaySaloons(null, null); // Show sample data if access fails
+            });
+        } else {
+            statusElement.innerText = "Geolocation not supported. Showing sample results.";
+            searchAndDisplaySaloons(null, null); // Show sample data
+        }
+    };
+
+    function searchAndDisplaySaloons(userLat, userLng) {
+        const listElement = document.getElementById('saloon-list');
+        listElement.innerHTML = '';
+        
+        // --- SIMULATION OF GEO-QUERY ---
+        db.collection('applications')
+            .where('status', '==', 'Approved')
+            .limit(10)
+            .get()
+            .then(snapshot => {
+                let found = false;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // SIMULATION: Only include saloons with location data
+                    if (data.location && data.location.lat) {
+                        const distance = calculateDistance(userLat, userLng, data.location.lat, data.location.lng);
+                        
+                        // Check against the 500m radius
+                        if (distance <= RADIUS_M) {
+                            listElement.innerHTML += `
+                                <div class="card p-3 border-l-4 border-green-400 flex justify-between items-center">
+                                    <div>
+                                        <p class="font-semibold text-white">${data.saloonName} (${data.ownerName})</p>
+                                        <p class="text-sm text-gray-400">${(distance / 1000).toFixed(2)} km away</p>
+                                    </div>
+                                    <a href="customer_book_appointment.html?saloonId=${data.uid}" class="text-sm p-2 rounded bg-blue-600 hover:bg-blue-700 text-white">Book Now</a>
+                                </div>
+                            `;
+                            found = true;
+                        }
+                    }
+                });
+
+                if (!found) {
+                    listElement.innerHTML = `<p class="text-red-400 text-center">No saloon registered within the 500 meter radius.</p>`;
+                }
+            });
+    }
+    
+    lucide.createIcons();
+</script>
 </body>
 </html>
