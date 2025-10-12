@@ -205,6 +205,80 @@
             </a>
         </nav>
     </footer>
+<script>
+    // Make sure 'auth', 'db', and 'functions' are initialized in the <head>
+    const bookingForm = document.querySelector('form');
+    const sendSmsFunction = functions.httpsCallable('sendSms'); // Reference to the deployed Cloud Function
 
+    bookingForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        // 1. Gather Appointment Details (simplified for this example)
+        const service = "Haircut + Beard Trim"; // Example value
+        const barberName = "Barber Mike"; // Example value
+        const date = "Tomorrow, Wednesday, Oct 25"; // Example value
+        const time = "10:30 AM"; // Example value
+        const totalAmount = "$40";
+        
+        const appointmentDateTime = new Date(`${date} ${time}`); // Combine for a JS Date object
+        
+        // Ensure user is logged in
+        const user = auth.currentUser;
+        if (!user) {
+            alert("You must be logged in to book an appointment.");
+            // Redirect to login page
+            window.location.href = 'customer_login.html'; 
+            return;
+        }
+
+        // 2. Save Appointment to Firestore
+        db.collection('appointments').add({
+            customerId: user.uid,
+            customerEmail: user.email,
+            saloonId: 'saloonID_placeholder', // Should be dynamically captured from the previous screen
+            service: service,
+            barber: barberName,
+            dateTime: firebase.firestore.Timestamp.fromDate(appointmentDateTime),
+            total: totalAmount,
+            status: 'Booked',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then((docRef) => {
+            // 3. Trigger SMS Notification
+            // NOTE: The 'to' number should be retrieved from the 'customers' collection 
+            // using the user.uid, but for speed, we use a placeholder or assume it's stored on the user object.
+            
+            // Simulating retrieval of the customer's contact number:
+            return db.collection('customers').doc(user.uid).get();
+        })
+        .then(doc => {
+            if (doc.exists && doc.data().contactNumber) {
+                const customerNumber = doc.data().contactNumber;
+                
+                const smsBody = `ASAMS: Your appointment with ${barberName} at 
+                                ${time} on ${date} is CONFIRMED. Total: ${totalAmount}. 
+                                See you soon!`;
+
+                // Call the deployed Twilio Cloud Function
+                return sendSmsFunction({ 
+                    to: customerNumber, 
+                    body: smsBody 
+                });
+            } else {
+                console.warn("Contact number not found. Skipping SMS notification.");
+                return Promise.resolve(); // Continue without SMS
+            }
+        })
+        .then(() => {
+            // 4. Redirect to confirmation page
+            alert("Appointment booked and notification sent!");
+            window.location.href = 'customer_appointment_confirmation.html'; 
+        })
+        .catch((error) => {
+            console.error("Booking or SMS Error:", error);
+            alert(`Appointment Booking Failed: ${error.message}. Check console for details.`);
+        });
+    });
+</script>
 </body>
 </html>

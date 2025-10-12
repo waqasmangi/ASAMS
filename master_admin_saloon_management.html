@@ -206,6 +206,78 @@
             </a>
         </nav>
     </footer>
+<script>
+    const createSaloonForm = document.querySelector('form');
+    
+    // Function to calculate the trial expiration date (7 days from now)
+    const calculateTrialExpiration = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 7);
+        return firebase.firestore.Timestamp.fromDate(date);
+    };
 
+    createSaloonForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const saloonName = document.getElementById('saloon-name').value;
+        const ownerEmail = document.getElementById('owner-email').value;
+        
+        // Generate a random, temporary password for the new owner 
+        // NOTE: In a production system, this should be more robust, and the owner should be forced to change it.
+        const tempPassword = Math.random().toString(36).slice(-8) + '!1A'; 
+
+        const subscriptionFee = "Rs 499/month pkr"; // Fixed default value for display
+
+        // 1. Create User in Firebase Authentication
+        auth.createUserWithEmailAndPassword(ownerEmail, tempPassword)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // 2. Save Saloon/Owner details to a 'saloons' collection
+                return db.collection('saloons').doc(user.uid).set({
+                    saloonId: user.uid,
+                    name: saloonName,
+                    ownerEmail: ownerEmail,
+                    subscriptionFee: subscriptionFee,
+                    status: 'Trial',
+                    trialStart: firebase.firestore.FieldValue.serverTimestamp(),
+                    trialEnd: calculateTrialExpiration(),
+                    
+                    // Master Admin contact info for cash payment (Hardcoded from file details)
+                    paymentDetails: {
+                        easyPesa: "0345-1234567 (Master Admin Name)",
+                        jazzCash: "0300-9876543 (Master Admin Name)",
+                        whatsapp: "[Master Admin WhatsApp Number Here]" // Replace with the actual WhatsApp number
+                    },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => user); // Pass the user object to the next .then()
+            })
+            .then((user) => {
+                // 3. Optional: Send SMS/Email with the generated credentials
+                alert(`Saloon account created successfully for ${saloonName}! 
+                       Owner Email: ${user.email}, 
+                       Temp Password: ${tempPassword}. 
+                       (SMS notification would be triggered here.)`);
+
+                // A real implementation would call the deployed Cloud Function here:
+                /*
+                const sendSmsFunction = functions.httpsCallable('sendSms');
+                sendSmsFunction({ 
+                    to: '[Owner Contact Number]', // Need to capture this in the form!
+                    body: `Welcome to ASAMS! Your login: ${ownerEmail}, Temp Password: ${tempPassword}` 
+                });
+                */
+                
+                // Refresh the page to show the new entry (in a real app, you'd update the list dynamically)
+                window.location.reload(); 
+            })
+            .catch((error) => {
+                alert(`Error creating saloon account: ${error.message}`);
+                // NOTE: If user creation succeeded but Firestore failed, 
+                // you would need to delete the Firebase Auth user here to clean up.
+            });
+    });
+</script>
 </body>
 </html>
