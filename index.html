@@ -3,49 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASAMS - Welcome</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>ASAMS - Master Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* 1. Branding Colors (MANDATORY) [cite: 59, 60, 61, 62] */
+        :root {
+            --dark-navy: #1C2431;
+            --gold: #D4AF37;
+            --darker-bg: #151C25;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 2. Mobile Frame (MANDATORY) [cite: 58] */
+        .mobile-frame {
+            max-width: 380px; /* Max-width constraint */
+            height: 820px; /* Height constraint */
+            border: 12px solid #000;
+            border-radius: 40px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 3. Gold Gradient Button (MANDATORY) [cite: 64] */
+        .gold-button {
+            background: linear-gradient(180deg, #E6C25F 0%, var(--gold) 100%);
+            color: var(--darker-bg);
+            font-weight: 700;
+            transition: transform 0.1s;
+        }
+        .gold-button:hover {
+            opacity: 0.9;
+        }
+
+        /* 4. Typography (MANDATORY) [cite: 63] */
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Input Styling for Pill Shape [cite: 65] */
+        .pill-input {
+            background-color: var(--dark-navy) !important;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding-left: 1.5rem;
+        }
+        .pill-input:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+        
+        /* Background pattern simulation */
+        .background-pattern {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23151C25"/><path d="M0 0h1v1H0zm2 0h1v1H2zm4 0h1v1H4zm6 0h1v1H6zm0 2h1v1H6zm4 0h1v1H8zm2 2h1v1H10zM0 2h1v1H0zm4 2h1v1H4zm2 2h1v1H6zm-6 2h1v1H0z" fill-opacity=".05" fill="%23D4AF37"/></svg>');
+        }
+
+    </style>
 </head>
-<body>
-    <div class="background-container">
-        </div>
-    <div class="main-container">
-        <div class="welcome-card">
-            <h1 class="logo">Gentleman's Grooming Co.</h1>
-            <p>Welcome to Ayaan Saloon Appointment Management System (ASAMS)</p>
-            <div class="form-section">
-                <h2>Welcome</h2>
-                <div class="login-options">
-                    <button id="login-btn" class="primary-btn">LOG IN</button>
-                    <button id="signup-btn" class="secondary-btn">SIGN UP</button>
-                    <button id="guest-btn" class="text-btn">Browse as Guest</button>
-                </div>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4 font-inter">
 
-                <form id="login-form" class="auth-form" style="display: none;">
-                    <input type="email" id="login-email" placeholder="Email" required>
-                    <input type="password" id="login-password" placeholder="Password" required>
-                    <button type="submit" class="primary-btn">Log In</button>
-                    <p class="switch-link">Don't have an account? <a href="#" onclick="showSignup()">Sign Up</a></p>
-                </form>
-
-                <form id="signup-form" class="auth-form" style="display: none;">
-                    <input type="text" id="signup-name" placeholder="Full Name" required>
-                    <input type="email" id="signup-email" placeholder="Email" required>
-                    <input type="password" id="signup-password" placeholder="Password" required>
-                    <select id="signup-role">
-                        <option value="customer">Customer</option>
-                        <option value="store_owner">Store Owner</option>
-                        </select>
-                    <button type="submit" class="primary-btn">Sign Up</button>
-                    <p class="switch-link">Already have an account? <a href="#" onclick="showLogin()">Log In</a></p>
-                </form>
+    <div class="mobile-frame bg-[var(--darker-bg)] background-pattern">
+        
+        <div class="flex justify-between items-center px-4 pt-3 text-xs text-white">
+            <span class="font-bold">10:00</span>
+            <div class="flex space-x-1">
+                <i data-lucide="signal" class="w-4 h-4 text-white"></i>
+                <i data-lucide="wifi" class="w-4 h-4 text-white"></i>
+                <i data-lucide="battery-full" class="w-4 h-4 text-white"></i>
             </div>
         </div>
-    </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="js/main.js"></script>
+        <header class="text-center pt-2">
+            <div class="flex flex-col items-center justify-center pt-2">
+                <div class="relative">
+                    <i data-lucide="scissors" class="w-12 h-12 text-white bg-[var(--dark-navy)] p-1 rounded-full border-2 border-gold absolute -top-2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
+                    <i data-lucide="bar-chart-3" class="w-12 h-12 text-white bg-[var(--dark-navy)] p-1 rounded-full border-2 border-gold absolute -bottom-2 left-1/2 transform -translate-x-1/2 translate-y-1/2"></i>
+                </div>
+                <div class="mt-8">
+                    <h1 class="font-cinzel text-4xl font-bold text-white tracking-widest leading-none">ASAMS</h1>
+                    <p class="text-[0.65rem] tracking-[0.25em] font-semibold text-gold mt-1 uppercase">(Ayaan Saloon Appointment Management System)</p>
+                </div>
+            </div>
+
+            <div class="mt-4 p-2 bg-[var(--dark-navy)] bg-opacity-70 rounded-lg mx-8 border border-[var(--border-color)]">
+                <h2 class="text-white text-sm font-semibold tracking-wider uppercase">MASTER ADMIN Portal Login</h2>
+            </div>
+        </header>
+
+        <main class="p-8 pt-6 space-y-6">
+            <div class="text-center text-white">
+                <h3 class="text-2xl font-bold">WELCOME BACK, ADMIN!</h3>
+                <p class="text-sm text-gray-400 mt-1">Log in manage the entire system</p>
+            </div>
+
+            <form id="masterAdminLoginForm" class="space-y-4">
+                <div class="relative">
+                    <input type="email" id="email" placeholder="EMAIL ADDRESS" required class="w-full h-14 rounded-full px-5 text-sm pill-input placeholder-gray-500 font-inter">
+                    <i data-lucide="mail" class="w-4 h-4 text-gray-400 absolute right-5 top-1/2 transform -translate-y-1/2"></i>
+                </div>
+
+                <div class="relative">
+                    <input type="password" id="password" placeholder="PASSWORD" required class="w-full h-14 rounded-full px-5 text-sm pill-input placeholder-gray-500 font-inter">
+                    <i data-lucide="lock" class="w-4 h-4 text-gray-400 absolute right-5 top-1/2 transform -translate-y-1/2"></i>
+                </div>
+
+                <button type="submit" class="w-full h-14 rounded-full text-lg gold-button shadow-lg mt-6">
+                    LOG IN
+                </button>
+            </form>
+
+            <div class="text-center text-sm space-y-2">
+                <a href="#" class="text-gold hover:underline">Forgot Password?</a>
+                <a href="#" class="block text-white text-opacity-70 hover:underline">SIGN UP</a> 
+            </div>
+            
+            <p id="error-message" class="text-red-500 text-center font-semibold mt-4 hidden">Authentication Failed.</p>
+        </main>
+
+        <footer class="absolute bottom-0 w-full bg-[var(--dark-navy)] bg-opacity-80 border-t border-[var(--border-color)]">
+            <div class="flex justify-around py-2 text-center text-white text-[0.6rem] font-medium uppercase">
+                <a href="#" class="flex flex-col items-center p-1">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-1">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                    <span>Appointmnts</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-1">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span>Clients</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-1">
+                    <i data-lucide="user-cog" class="w-5 h-5"></i>
+                    <span>Staff</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-1 text-gold">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <span>Reports</span>
+                </a>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+
+    <script>
+        // Initialize Firebase [cite: 5, 6, 7, 8, 9, 10, 11, 12]
+        const firebaseConfig = {
+            apiKey: "AIzaSyASYEyIgxmKLoSKUwgx9IxDtPwuDR69wso",
+            authDomain: "asams-a539a.firebaseapp.com",
+            projectId: "asams-a539a",
+            storageBucket: "asams-a539a.firebasestorage.app",
+            messagingSenderId: "518908788173",
+            appId: "1:518908788173:web:0706014508b8f774391884",
+            measurementId: "G-XR730JWN20"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Get Firebase Auth instance
+        const auth = firebase.auth();
+        const masterAdminEmail = "waqasmangi.uk@gmail.com";
+        const masterAdminPassword = "Ayaan@10539"; // Default password 
+
+        // Handle Login Form Submission
+        document.getElementById('masterAdminLoginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.classList.add('hidden');
+
+            // Simple client-side check for the *default* admin email to prevent accidental sign-ins on this page
+            if (email !== masterAdminEmail) {
+                errorMessage.textContent = 'Only the Master Admin email is allowed here.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Firebase Sign-In
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Successful login
+                    console.log('Master Admin logged in:', userCredential.user);
+                    // Redirect to the Master Admin Dashboard
+                    window.location.href = 'master-admin-dashboard.html';
+                })
+                .catch((error) => {
+                    // Handle Errors
+                    const errorCode = error.code;
+                    const errorMsg = error.message;
+                    console.error("Login Error:", errorCode, errorMsg);
+                    errorMessage.textContent = 'Invalid credentials or account issue.';
+                    errorMessage.classList.remove('hidden');
+
+                    // If it's the very first time, we need to create the default user (since this is an initial setup)
+                    // NOTE: This initial user creation should ideally be done once via Firebase console/CLI for security, 
+                    // but for a "ready-to-use" system, we'll include a setup routine here.
+                    if (errorCode === 'auth/user-not-found' && email === masterAdminEmail && password === masterAdminPassword) {
+                        // This block will execute if the user is not found, meaning it's the very first run.
+                        auth.createUserWithEmailAndPassword(masterAdminEmail, masterAdminPassword)
+                            .then(() => {
+                                console.log("Master Admin user created successfully. Logging in...");
+                                // Auto-login after creation
+                                auth.signInWithEmailAndPassword(masterAdminEmail, masterAdminPassword).then(() => {
+                                     window.location.href = 'master-admin-dashboard.html';
+                                });
+                            })
+                            .catch(creationError => {
+                                console.error("Initial User Creation Error:", creationError.message);
+                                errorMessage.textContent = 'Setup Error: Could not create Master Admin user.';
+                                errorMessage.classList.remove('hidden');
+                            });
+                    }
+                });
+        });
+        
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
 </body>
 </html>
