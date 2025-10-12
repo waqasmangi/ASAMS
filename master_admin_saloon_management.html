@@ -3,281 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASAMS - Master Admin Saloon Management</title>
+    <title>ASAMS - Saloon Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-
-<script src="firebase-config.js"></script>
-
-<script>
-    // Initialize Firebase using the config object from firebase-config.js
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-    const functions = app.functions('us-central1'); // Use the correct region if different
-</script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+        const functions = app.functions('us-central1');
+        const sendSmsFunction = functions.httpsCallable('sendSms');
+    </script>
     <style>
-        /* CSS Variables for Branding */
-        :root {
-            --dark-navy: #1C2431;
-            --gold: #D4AF37;
-            --darker-bg: #151C25; 
-        }
-
-        /* Custom Gold Gradient Button Class */
-        .gold-gradient-button {
-            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
-            color: var(--darker-bg); 
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Input Styling */
-        .custom-input {
-            background-color: var(--dark-navy); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 1rem;
-            border-radius: 9999px; /* Pill-shaped */
-            font-size: 0.875rem;
-        }
-
-        /* Custom Font Classes */
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
-        }
-        .font-inter {
-            font-family: 'Inter', sans-serif;
-        }
+        .card { background-color: #374151; padding: 1rem; border-radius: 0.5rem; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: #F9FAFB; padding: 0.75rem; border-radius: 0.375rem; }
     </style>
 </head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
+        <header class="mb-8 border-b border-gray-700 pb-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">Saloon Applications</h1>
+            <a href="master_admin_dashboard.html" class="text-sm text-yellow-400 hover:text-yellow-300">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-1"></i> Dashboard
+            </a>
+        </header>
 
-    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
+        <main class="space-y-6">
 
-        <header class="flex justify-between items-center pt-2 pb-4">
-            <div class="flex items-center space-x-2 text-white">
-                <div class="relative">
-                    <i data-lucide="scissors" class="w-8 h-8" style="color: var(--gold);"></i>
+            <div class="card">
+                <h2 class="text-lg font-bold mb-3 text-red-400">Pending Applications</h2>
+                <div id="pending-applications-list" class="space-y-3">
+                    <p class="text-gray-400">Loading pending applications...</p>
                 </div>
-                <div class="flex flex-col items-start">
-                    <span class="font-cinzel text-lg tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
+            </div>
+
+            <div class="card">
+                <h2 class="text-lg font-bold mb-3 text-green-400">Active & Approved Saloons</h2>
+                <div id="approved-saloons-list" class="space-y-3">
+                    <p class="text-gray-400">Loading approved saloons...</p>
                 </div>
             </div>
             
-            <div class="flex items-center space-x-3">
-                <span class="text-xs uppercase font-semibold tracking-wider px-3 py-1 rounded-full hidden sm:inline" style="background-color: var(--dark-navy); color: var(--gold);">
-                    MASTER ADMIN PORTAL
-                </span>
-                <i data-lucide="settings" class="w-6 h-6 text-gray-400 cursor-pointer"></i>
-            </div>
-        </header>
-
-        <main class="flex-grow pb-24">
-            <h1 class="text-2xl font-bold text-white tracking-wider mb-6 font-cinzel">
-                ADD NEW SALOONS
-            </h1>
-
-            <section class="mb-8 p-4 rounded-xl" style="background-color: var(--darker-bg);">
-                <form action="#" method="POST" class="space-y-4">
-                    
-                    <div class="relative">
-                        <input type="text" id="saloon-name" name="saloon_name" required placeholder="Saloon Name"
-                            class="w-full custom-input"
-                        >
-                    </div>
-
-                    <div class="relative">
-                        <input type="email" id="owner-email" name="owner_email" required placeholder="Owner Email"
-                            class="w-full custom-input"
-                        >
-                        <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                    </div>
-
-                    <div class="relative p-4 rounded-xl text-sm" style="background-color: var(--dark-navy);">
-                        <div class="flex justify-between items-center">
-                            <label for="subscription-plan" class="text-gray-400">Subscription Plan</label>
-                            <span class="text-white font-semibold">Premium (Rs. 499/month pkr)</span>
-                            <i data-lucide="more-horizontal" class="w-5 h-5 text-gray-400 cursor-pointer"></i>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2 flex items-center">
-                            <i data-lucide="info" class="w-4 h-4 mr-1 text-yellow-500"></i>
-                            New saloons get a 7-day free trial before subscription is required[cite: 1].
-                        </p>
-                    </div>
-
-                    <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
-                        CREATE SALOON ACCOUNT
-                    </button>
-                </form>
-
-                <div class="mt-8 pt-4 border-t border-gray-700">
-                    <h3 class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Subscription Payment Info (Cash Only)</h3>
-                    <p class="text-xs text-gray-400 mb-3">
-                        Subscription is **Rs 499/month PKR** (changeable by admin)[cite: 1, 31]. Owners should pay and send a screenshot to the Admin's WhatsApp number.
-                    </p>
-                    
-                    <div class="p-3 rounded-lg mb-2" style="background-color: #1C312E;">
-                        <p class="text-sm font-semibold text-green-400">EasyPesa Account</p>
-                        <p class="text-white text-xs">A/C Holder: Master Admin Name</p>
-                        <p class="text-white text-xs">A/C Number: 0345-1234567</p>
-                    </div>
-
-                    <div class="p-3 rounded-lg" style="background-color: #311C21;">
-                        <p class="text-sm font-semibold text-red-400">Jazz Cash Account</p>
-                        <p class="text-white text-xs">A/C Holder: Master Admin Name</p>
-                        <p class="text-white text-xs">A/C Number: 0300-9876543</p>
-                    </div>
-                </div>
-            </section>
-
-
-            <section>
-                <h2 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4">LIST OF ACTIVE SALOONS</h2>
-                <div class="space-y-3">
-                    
-                    <div class="flex justify-between items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold" style="color: var(--gold);">LOGO</div>
-                            <div>
-                                <p class="text-white font-semibold">The Gentleman's Cut - Metroville</p>
-                                <p class="text-xs text-gray-400">Owner: Naa!n@ddt.Email</p>
-                            </div>
-                        </div>
-                        <button class="px-4 py-1 text-xs font-bold rounded-full border" style="border-color: var(--gold); color: var(--gold);">EDIT</button>
-                    </div>
-
-                    <div class="flex justify-between items-center p-3 rounded-xl" style="background-color: var(--dark-navy);">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold" style="color: var(--gold);">LOGO</div>
-                            <div>
-                                <p class="text-white font-semibold">Mike's Modern Cuts</p>
-                                <p class="text-xs text-gray-400">Owner: Nai (Rs. 499/month)</p>
-                            </div>
-                        </div>
-                        <button class="px-4 py-1 text-xs font-bold rounded-full border" style="border-color: var(--gold); color: var(--gold);">EDIT</button>
-                    </div>
-
-                    <div class="flex justify-between items-center p-3 rounded-xl border-l-4" style="background-color: var(--dark-navy); border-color: #63E6BE;">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold" style="color: var(--gold);">LOGO</div>
-                            <div>
-                                <p class="text-white font-semibold">Active (Trial - Premium)</p>
-                                <p class="text-xs text-green-400">7 Days Left</p>
-                            </div>
-                        </div>
-                        <button class="px-4 py-1 text-xs font-bold rounded-full border" style="border-color: var(--gold); color: var(--gold);">EDIT</button>
-                    </div>
-                </div>
-            </section>
         </main>
-        
     </div>
 
-    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
-        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase">
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
-                HOME
-            </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
-                APPOINTMENTS
-            </a>
-            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
-                <i data-lucide="store" class="w-5 h-5 mb-1"></i>
-                SALOONS
-            </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
-                REPORTS
-            </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="more-horizontal" class="w-5 h-5 mb-1"></i>
-                MORE
-            </a>
-        </nav>
-    </footer>
 <script>
-    const createSaloonForm = document.querySelector('form');
+    let adminSettings = {};
+
+    auth.onAuthStateChanged(user => {
+        if (!user || user.email !== 'waqasmangi.uk@gmail.com') {
+            window.location.href = 'master_admin_login.html';
+        } else {
+            // Load Admin settings for sending WhatsApp links
+            db.collection('settings').doc('admin').get().then(doc => {
+                if (doc.exists) {
+                    adminSettings = doc.data();
+                }
+                loadApplications();
+            });
+        }
+    });
     
-    // Function to calculate the trial expiration date (7 days from now)
-    const calculateTrialExpiration = () => {
-        const date = new Date();
-        date.setDate(date.getDate() + 7);
-        return firebase.firestore.Timestamp.fromDate(date);
+    // Helper to format date
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        return timestamp.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    createSaloonForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const saloonName = document.getElementById('saloon-name').value;
-        const ownerEmail = document.getElementById('owner-email').value;
+    function createSaloonCard(data, isPending) {
+        const div = document.createElement('div');
+        div.className = 'p-4 rounded-xl shadow-lg flex flex-col space-y-3 border border-gray-700';
+        div.style.backgroundColor = isPending ? '#341A1C' : '#1F2937'; 
         
-        // Generate a random, temporary password for the new owner 
-        // NOTE: In a production system, this should be more robust, and the owner should be forced to change it.
-        const tempPassword = Math.random().toString(36).slice(-8) + '!1A'; 
+        const trialEndDisplay = data.trialEnd ? formatDate(data.trialEnd) : 'N/A';
+        
+        div.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-lg font-bold text-white">${data.saloonName}</h3>
+                    <p class="text-sm text-gray-400">Owner: ${data.ownerName} | ${data.contactNumber}</p>
+                    <p class="text-xs text-gray-500">${data.address}</p>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full ${isPending ? 'bg-red-500' : 'bg-green-500'} text-white">
+                    ${isPending ? 'PENDING' : 'APPROVED'}
+                </span>
+            </div>
+            
+            <div class="border-t border-gray-700 pt-3 flex justify-between items-center text-sm text-gray-300">
+                <p>Trial Ends:</p>
+                <p class="font-bold">${trialEndDisplay}</p>
+            </div>
 
-        const subscriptionFee = "Rs 499/month pkr"; // Fixed default value for display
+            <div class="pt-3 flex space-x-2">
+                ${isPending ? `
+                    <button onclick="approveApplication('${data.uid}', '${data.email}', '${data.contactNumber}')" class="flex-1 p-2 rounded-full uppercase text-xs font-bold bg-green-600 text-white hover:bg-green-700">
+                        APPROVE
+                    </button>
+                ` : `
+                    <button onclick="editSaloon('${data.uid}')" class="flex-1 p-2 rounded-full uppercase text-xs font-bold bg-blue-600 text-white hover:bg-blue-700">
+                        EDIT DETAILS
+                    </button>
+                `}
+                <button onclick="sendMessage('${data.contactNumber}', '${data.saloonName}', '${data.ownerName}')" class="flex-1 p-2 rounded-full uppercase text-xs font-bold bg-yellow-600 text-gray-900 hover:bg-yellow-500 flex items-center justify-center">
+                    <i data-lucide="whatsapp" class="w-4 h-4 mr-1"></i> Message
+                </button>
+            </div>
+        `;
+        return div;
+    }
+    
+    // --- Firestore Listener ---
+    function loadApplications() {
+        const pendingList = document.getElementById('pending-applications-list');
+        const approvedList = document.getElementById('approved-saloons-list');
+        pendingList.innerHTML = '<p class="text-gray-400">No pending applications.</p>';
+        approvedList.innerHTML = '<p class="text-gray-400">No approved saloons yet.</p>';
 
-        // 1. Create User in Firebase Authentication
-        auth.createUserWithEmailAndPassword(ownerEmail, tempPassword)
-            .then((userCredential) => {
-                const user = userCredential.user;
-                
-                // 2. Save Saloon/Owner details to a 'saloons' collection
-                return db.collection('saloons').doc(user.uid).set({
-                    saloonId: user.uid,
-                    name: saloonName,
-                    ownerEmail: ownerEmail,
-                    subscriptionFee: subscriptionFee,
-                    status: 'Trial',
-                    trialStart: firebase.firestore.FieldValue.serverTimestamp(),
-                    trialEnd: calculateTrialExpiration(),
-                    
-                    // Master Admin contact info for cash payment (Hardcoded from file details)
-                    paymentDetails: {
-                        easyPesa: "0345-1234567 (Master Admin Name)",
-                        jazzCash: "0300-9876543 (Master Admin Name)",
-                        whatsapp: "[Master Admin WhatsApp Number Here]" // Replace with the actual WhatsApp number
-                    },
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                })
-                .then(() => user); // Pass the user object to the next .then()
-            })
-            .then((user) => {
-                // 3. Optional: Send SMS/Email with the generated credentials
-                alert(`Saloon account created successfully for ${saloonName}! 
-                       Owner Email: ${user.email}, 
-                       Temp Password: ${tempPassword}. 
-                       (SMS notification would be triggered here.)`);
-
-                // A real implementation would call the deployed Cloud Function here:
-                /*
-                const sendSmsFunction = functions.httpsCallable('sendSms');
-                sendSmsFunction({ 
-                    to: '[Owner Contact Number]', // Need to capture this in the form!
-                    body: `Welcome to ASAMS! Your login: ${ownerEmail}, Temp Password: ${tempPassword}` 
-                });
-                */
-                
-                // Refresh the page to show the new entry (in a real app, you'd update the list dynamically)
-                window.location.reload(); 
-            })
-            .catch((error) => {
-                alert(`Error creating saloon account: ${error.message}`);
-                // NOTE: If user creation succeeded but Firestore failed, 
-                // you would need to delete the Firebase Auth user here to clean up.
+        db.collection('applications').onSnapshot(snapshot => {
+            pendingList.innerHTML = '';
+            approvedList.innerHTML = '';
+            let pendingCount = 0;
+            let approvedCount = 0;
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.status === 'Pending') {
+                    pendingList.appendChild(createSaloonCard(data, true));
+                    pendingCount++;
+                } else if (data.status === 'Approved' || data.status === 'Paid') {
+                    approvedList.appendChild(createSaloonCard(data, false));
+                    approvedCount++;
+                }
             });
-    });
+
+            if (pendingCount === 0) pendingList.innerHTML = '<p class="text-gray-400">No pending applications.</p>';
+            if (approvedCount === 0) approvedList.innerHTML = '<p class="text-gray-400">No approved saloons yet.</p>';
+            
+            lucide.createIcons();
+        });
+    }
+    
+    // --- Approval Logic ---
+    window.approveApplication = (uid, email, contactNumber) => {
+        if (!confirm(`Are you sure you want to approve the application for ${email}? This will start their 7-day trial.`)) return;
+
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + 7);
+        const trialEndTimestamp = firebase.firestore.Timestamp.fromDate(trialEnd);
+        
+        // 1. Update application status to Approved and set trial dates
+        db.collection('applications').doc(uid).update({
+            status: 'Approved',
+            trialStart: firebase.firestore.FieldValue.serverTimestamp(),
+            trialEnd: trialEndTimestamp
+        })
+        .then(() => {
+            // 2. Send SMS Notification to Saloon Owner
+            const ownerSmsBody = `Congratulation! Your request for ASAMS account has been approved by admin. You can access your account now with your details (Username: ${email}, Password: [set by you at the time of signup]). For any question, feel free to contact us.`;
+            return sendSmsFunction({ to: contactNumber, body: ownerSmsBody })
+                .catch(err => console.error("SMS notification failed:", err)); // Log SMS errors
+        })
+        .then(() => {
+            alert(`Application for ${email} approved! Owner is now on 7-day trial.`);
+        })
+        .catch(error => {
+            alert(`Approval failed: ${error.message}`);
+        });
+    };
+
+    // --- Messaging Logic ---
+    window.sendMessage = (contactNumber, saloonName, ownerName) => {
+        const adminNumber = adminSettings.whatsappNumber;
+
+        if (!adminNumber) {
+            alert("Admin WhatsApp number is not set in settings. Cannot send message.");
+            return;
+        }
+        
+        // Construct a pre-filled message
+        const message = `Dear ${ownerName} from ${saloonName}, I am the ASAMS Admin. I am contacting you regarding your subscription.`; 
+        
+        // Open WhatsApp Web/App from the ADMIN's WhatsApp number
+        const whatsappURL = `https://wa.me/${adminNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappURL, '_blank');
+    };
+
+    window.editSaloon = (uid) => {
+        alert(`Redirecting to edit Saloon ID: ${uid}.`);
+        // window.location.href = `master_admin_edit_saloon.html?uid=${uid}`; // Future edit page
+    };
+
+    lucide.createIcons();
 </script>
 </body>
 </html>
