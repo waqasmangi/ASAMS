@@ -6,202 +6,64 @@
     <title>ASAMS - Master Admin Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-
-<script src="firebase-config.js"></script>
-
-<script>
-    // Initialize Firebase using the config object from firebase-config.js
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-    const functions = app.functions('us-central1'); // Use the correct region if different
-</script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+        const functions = app.functions('us-central1');
+    </script>
     <style>
-        /* CSS Variables for Branding [cite: 55-58] */
-        :root {
-            --dark-navy: #1C2431;
-            --gold: #D4AF37;
-            --darker-bg: #151C25; 
-        }
-
-        /* Custom Gold Gradient Button Class [cite: 60] */
-        .gold-gradient-button {
-            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
-            color: var(--darker-bg); /* Dark text on gold */
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        .gold-gradient-button:hover {
-            opacity: 0.9;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Custom Font Classes [cite: 59] */
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
-        }
-        .font-inter {
-            font-family: 'Inter', sans-serif;
-        }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: #F9FAFB; padding: 0.75rem; border-radius: 0.375rem; }
     </style>
 </head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen flex flex-col justify-center">
 
-<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
-
-    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
-
-        <header class="text-center py-6">
-            <div class="flex flex-col items-center justify-center">
-                <div class="flex items-center space-x-2 text-white">
-                    <div class="relative">
-                        <i data-lucide="scissors" class="w-10 h-10" style="color: var(--gold);"></i>
-                        <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-cinzel text-xs" style="color: var(--darker-bg);">AS</span>
-                    </div>
-                    <div class="flex flex-col items-start">
-                        <span class="font-cinzel text-xl tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
-                        <span class="text-xs tracking-wider uppercase" style="color: #A0AEC0;">Ayaan Saloon Appointment Management System</span>
-                    </div>
-                </div>
-            </div>
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white">ASAMS Master Admin</h1>
+            <p class="text-sm text-gray-400 mt-2">Log in to manage the entire system.</p>
         </header>
 
-        <main class="bg-gray-800 p-6 rounded-xl shadow-2xl flex-grow" style="background-color: var(--darker-bg);">
+        <form id="admin-login-form" class="space-y-4">
+            <input type="email" id="email-address" placeholder="Email Address" class="input-style w-full" value="waqasmangi.uk@gmail.com" required>
+            <input type="password" id="password" placeholder="Password" class="input-style w-full" value="Ayaan@10539" required>
             
-            <div class="text-center mb-6">
-                <span class="text-xs uppercase font-semibold tracking-wider px-3 py-1 rounded-full" style="background-color: var(--dark-navy); color: var(--gold);">
-                    MASTER ADMIN Portal Login
-                </span>
-            </div>
-            
-            <h1 class="text-2xl font-bold text-white text-center mb-2 font-cinzel tracking-wider">
-                WELCOME BACK, ADMIN!
-            </h1>
-            <p class="text-gray-400 text-center mb-8 text-sm">
-                Log in manage the entire system.
-            </p>
-
-            <form action="#" method="POST" class="space-y-4">
-                
-                <div class="relative">
-                    <input type="email" id="email-address" name="email" required placeholder="EMAIL ADDRESS"
-                        class="w-full p-4 pl-4 font-inter text-white text-sm rounded-full placeholder-gray-400 focus:ring-2 focus:ring-gold"
-                        style="background-color: var(--dark-navy); border: 1px solid rgba(255, 255, 255, 0.1);"
-                        value="waqasmangi.uk@gmail.com"
-                    >
-                </div>
-
-                <div class="relative">
-                    <input type="password" id="password" name="password" required placeholder="PASSWORD"
-                        class="w-full p-4 pl-4 pr-12 font-inter text-white text-sm rounded-full placeholder-gray-400 focus:ring-2 focus:ring-gold"
-                        style="background-color: var(--dark-navy); border: 1px solid rgba(255, 255, 255, 0.1);"
-                        value="Ayaan@10539"
-                    >
-                    <i data-lucide="lock" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style="color: var(--gold);"></i>
-                </div>
-
-                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
-                    LOG IN
-                </button>
-            </form>
-
-            <div class="flex justify-center space-x-4 mt-6 text-sm">
-                <a href="#" class="text-gray-400 hover:text-white transition duration-200">
-                    Forgot Password?
-                </a>
-                <span class="text-gray-600">|</span>
-                <a href="#" class="text-gray-400 hover:text-white transition duration-200">
-                    SIGN UP
-                </a>
-            </div>
-
-        </main>
-        
+            <button type="submit" class="w-full p-3 rounded-lg uppercase font-bold bg-yellow-500 text-gray-900 hover:bg-yellow-400">
+                LOG IN
+            </button>
+        </form>
     </div>
 
-    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
-        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase">
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
-                HOME
-            </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
-                APPOINTMENTS
-            </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="users" class="w-5 h-5 mb-1"></i>
-                CLIENTS
-            </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-white">
-                <i data-lucide="user-cog" class="w-5 h-5 mb-1"></i>
-                STAFF
-            </a>
-            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
-                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
-                REPORTS
-            </a>
-        </nav>
-    </footer>
 <script>
-    const loginForm = document.querySelector('form');
-
-    // Define the default Master Admin credentials 
+    const adminLoginForm = document.getElementById('admin-login-form');
     const MASTER_ADMIN_EMAIL = 'waqasmangi.uk@gmail.com';
     const MASTER_ADMIN_PASSWORD = 'Ayaan@10539';
-    const MASTER_ADMIN_UID_PLACEHOLDER = 'masterAdminUID'; // Placeholder UID for initial setup
 
-    loginForm.addEventListener('submit', (e) => {
+    adminLoginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const email = document.getElementById('email-address').value;
         const password = document.getElementById('password').value;
 
-        // 1. Check if trying to log in with the default Master Admin credentials
-        if (email === MASTER_ADMIN_EMAIL && password === MASTER_ADMIN_PASSWORD) {
-            
-            // NOTE: In a real system, the Master Admin's password should be changed immediately 
-            // after the first login and updated in Firebase Auth.
-
-            // Attempt to sign in via Firebase Auth
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-
-                    // Security Check: Ensure the logged-in user is the master admin (using a simple email check here)
-                    if (user.email === MASTER_ADMIN_EMAIL) {
-                        alert("Master Admin Login successful! Redirecting to dashboard.");
-                        window.location.href = 'master_admin_dashboard.html';
-                    } else {
-                        // This case should not happen if the login attempt was correct
-                        alert("Authentication failed: User is not recognized as Master Admin.");
-                        auth.signOut();
-                    }
-                })
-                .catch((error) => {
-                    // Handle case where the user might not be set up in Auth yet, or credentials are wrong
-                    alert(`Admin Login Failed: ${error.message}`);
-                });
-
-        } else if (email === MASTER_ADMIN_EMAIL) {
-            // If it's the admin email but not the default password, try standard login
-             auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    alert("Master Admin Login successful! Redirecting to dashboard.");
+        // Perform login attempt
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
+                // Check if this is the Master Admin email (simple role check)
+                if (email === MASTER_ADMIN_EMAIL) {
                     window.location.href = 'master_admin_dashboard.html';
-                })
-                .catch((error) => {
-                    alert(`Admin Login Failed: ${error.message}`);
-                });
-        } else {
-             alert("Only the Master Admin can log in here. Please use the Saloon Owner or Customer portals.");
-        }
+                } else {
+                    alert("Access denied. Please use the Saloon Owner or Customer portals.");
+                    auth.signOut();
+                }
+            })
+            .catch((error) => {
+                alert(`Login Failed: ${error.message}`);
+            });
     });
 </script>
 </body>
