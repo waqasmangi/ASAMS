@@ -97,17 +97,6 @@
 <script>
     let adminSettings = {};
 
-    // 1. Load Admin Settings (for subscription fee and payment details)
-    db.collection('settings').doc('admin').get()
-        .then(doc => {
-            if (doc.exists) {
-                adminSettings = doc.data();
-            }
-        })
-        .catch(error => {
-            console.error("Error loading admin settings:", error);
-        });
-
     function copyPaymentDetails(elementId) {
         const textToCopy = document.getElementById(elementId).innerText;
         navigator.clipboard.writeText(textToCopy).then(() => {
@@ -134,21 +123,31 @@
         const password = document.getElementById('create-password').value;
         const contactNumber = document.getElementById('contact-number').value; 
         
-        // 1. Fetch Admin Settings and proceed
+        if (password !== document.getElementById('create-password').value) { // Simple self-check, although form only has one password field now
+            alert("Passwords do not match.");
+            return;
+        }
+
+        let tempAdminSettings = {};
+        
+        // --- Core Sign-Up Logic ---
+
+        // 1. Fetch Admin Settings (Needed for the popup and SMS details)
         db.collection('settings').doc('admin').get()
             .then(doc => {
                 if (!doc.exists) {
                     throw new Error("Admin settings not configured. Please contact support.");
                 }
-                adminSettings = doc.data();
-
-                // 2. Create User in Firebase Auth
+                tempAdminSettings = doc.data();
+                
+                // 2. Create User in Firebase Auth (This MUST succeed before Firestore)
                 return auth.createUserWithEmailAndPassword(email, password);
             })
             .then((userCredential) => {
                 const user = userCredential.user;
                 
-                // 3. Save Application to Firestore (status: 'Pending')
+                // 3. Save Application to Firestore (This is the critical step)
+                // The security rule should now pass: allow create: if request.auth.uid == userId;
                 return db.collection('applications').doc(user.uid).set({
                     uid: user.uid,
                     ownerName: ownerName,
@@ -161,27 +160,28 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 });
             })
-            .then(() => {
+            .then((saveResult) => {
                 // 4. Send SMS Notification to Saloon Owner
                 const ownerSmsBody = `Dear Saloon Owner, Your request for ASAMS account has been received, your application is being reviewed by the Master Admin. Thanks for using ASAMS Service. please do not reply to this message.`;
                 sendSmsFunction({ to: contactNumber, body: ownerSmsBody })
                     .catch(err => console.error("Owner SMS failed on signup:", err));
                 
                 // 5. Send SMS Notification to Master Admin
-                if (adminSettings.adminContactNumber) {
+                if (tempAdminSettings.adminContactNumber) {
                     const adminSmsBody = `Dear Admin, ${ownerName} (${saloonName}) has applied for ASAMS account. Please review and approve the application.`;
-                    sendSmsFunction({ to: adminSettings.adminContactNumber, body: adminSmsBody })
+                    sendSmsFunction({ to: tempAdminSettings.adminContactNumber, body: adminSmsBody })
                         .catch(err => console.error("Admin SMS failed on signup:", err));
                 }
 
                 // 6. Show Payment Details Pop-up
                 showPaymentInfoPopup(
-                    adminSettings.subscriptionFee || 'N/A', 
-                    adminSettings.easyPesaDetails || 'N/A (Please set in Admin Panel)', 
-                    adminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)'
+                    tempAdminSettings.subscriptionFee || 'N/A', 
+                    tempAdminSettings.easyPesaDetails || 'N/A (Please set in Admin Panel)', 
+                    tempAdminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)'
                 );
             })
             .catch((error) => {
+                // Handle all errors (Auth, Firestore, or network issues)
                 alert(`Application submission failed: ${error.message}. Please try again.`);
                 console.error("Submission failed:", error);
             });
