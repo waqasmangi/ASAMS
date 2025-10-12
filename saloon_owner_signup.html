@@ -6,165 +6,175 @@
     <title>ASAMS - Saloon Owner Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
+        .btn-primary { background-color: var(--accent-blue); color: white; transition: background-color 0.2s; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; }
+        #payment-modal { background-color: rgba(0, 0, 0, 0.8); z-index: 100; }
+        .modal-content { background-color: #1F2937; }
+    </style>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-<script src="firebase-config.js"></script>
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-white">ASAMS Owner Sign Up</h1>
+            <p class="text-sm text-gray-400 mt-2">Submit your saloon details to begin your 7-day free trial.</p>
+        </header>
+
+        <main>
+            <form id="signup-form" class="space-y-4">
+                <input type="text" id="owner-name" placeholder="Owner Full Name" class="input-style w-full" required>
+                <input type="text" id="saloon-name" placeholder="Saloon Name" class="input-style w-full" required>
+                <input type="text" id="address" placeholder="Saloon Address" class="input-style w-full" required>
+                <input type="email" id="email-address" placeholder="Login Email" class="input-style w-full" required>
+                <input type="tel" id="contact-number" placeholder="Contact Number (+92XXXXXXXXXX)" class="input-style w-full" pattern="^\+92\d{10}$" title="Must be in +92xxxxxxxxxx format" required>
+                <input type="password" id="create-password" placeholder="Create Password" class="input-style w-full" required>
+                <p class="text-xs text-yellow-500">Contact Number is mandatory for SMS notifications.</p>
+                
+                <button type="submit" class="w-full p-3 rounded-lg uppercase font-bold btn-primary">
+                    SUBMIT APPLICATION
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <a href="saloon_owner_login.html" class="text-gray-400 text-sm hover:text-white">Already have an account? Log In</a>
+            </div>
+        </main>
+    </div>
+
+    <div id="payment-modal" class="fixed inset-0 hidden items-center justify-center p-4">
+        <div class="modal-content max-w-sm w-full p-6 rounded-xl shadow-2xl space-y-4">
+            <h3 class="text-xl font-bold text-white border-b pb-2 border-gray-700">
+                <i data-lucide="info" class="w-5 h-5 inline mr-2 text-yellow-400"></i>
+                7-Day Trial Information
+            </h3>
+            
+            <p class="text-gray-300">
+                You are on a **7 Day Free trial period**. To continue after the trial, you must pay the Monthly subscription fee of 
+                <span id="monthly-fee" class="font-bold text-xl text-green-400"></span>.
+            </p>
+
+            <h4 class="text-lg font-semibold text-white mt-4">Payment Methods (Copy details):</h4>
+            
+            <div class="p-3 rounded-lg bg-gray-600">
+                <p class="font-semibold text-white">EasyPesa:</p>
+                <pre id="easypesa-details" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('easypesa-details')">
+                    <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
+                </button>
+            </div>
+            
+            <div class="p-3 rounded-lg bg-gray-600">
+                <p class="font-semibold text-white">JazzCash:</p>
+                <pre id="jazzcash-details" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('jazzcash-details')">
+                    <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
+                </button>
+            </div>
+
+            <button onclick="document.getElementById('payment-modal').classList.add('hidden')" class="w-full p-3 rounded-lg uppercase font-bold text-sm bg-red-600 text-white">
+                CLOSE
+            </button>
+        </div>
+    </div>
 
 <script>
-    // Initialize Firebase using the config object from firebase-config.js
     const app = firebase.initializeApp(firebaseConfig);
     const auth = app.auth();
     const db = app.firestore();
-    const functions = app.functions('us-central1'); // Use the correct region if different
-</script>
+    const functions = app.functions('us-central1');
+    const sendSmsFunction = functions.httpsCallable('sendSms');
 
-    <style>
-        /* CSS Variables for Branding */
-        :root {
-            --dark-navy: #1C2431;
-            --gold: #D4AF37;
-            --darker-bg: #151C25; 
-        }
+    function copyPaymentDetails(elementId) {
+        const textToCopy = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert('Payment details copied!');
+        });
+    }
 
-        /* Custom Gold Gradient Button Class */
-        .gold-gradient-button {
-            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
-            color: var(--darker-bg);
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Input Styling */
-        .custom-input {
-            background-color: var(--dark-navy); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 1rem;
-            border-radius: 9999px; /* Pill-shaped */
-            font-size: 0.875rem;
-        }
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
-        }
-        .font-inter {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
-</head>
-
-<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
-
-    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
-
-        <header class="text-center py-6">
-            <div class="flex flex-col items-center justify-center">
-                <div class="flex items-center space-x-2 text-white">
-                    <div class="relative">
-                        <i data-lucide="scissors" class="w-10 h-10" style="color: var(--gold);"></i>
-                        <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-cinzel text-xs" style="color: var(--darker-bg);">AS</span>
-                    </div>
-                    <div class="flex flex-col items-start">
-                        <span class="font-cinzel text-xl tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
-                        <span class="text-xs tracking-wider uppercase" style="color: #A0AEC0;">MASTER ADMIN PORTAL</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <main class="bg-gray-800 p-6 rounded-xl shadow-2xl flex-grow" style="background-color: var(--darker-bg);">
-            
-            <h1 class="text-2xl font-bold text-white text-center mb-6 font-cinzel tracking-wider">
-                CREATE SALOON OWNER ACCOUNT
-            </h1>
-
-            <form action="#" method="POST" class="space-y-4">
-                
-                <div class="relative">
-                    <input type="text" id="your-name" name="your_name" required placeholder="YOUR NAME"
-                        class="w-full custom-input"
-                    >
-                </div>
-
-                <div class="relative">
-                    <input type="text" id="saloon-name" name="saloon_name" required placeholder="SALOON NAME"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="heart" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                </div>
-
-                <div class="relative">
-                    <input type="email" id="email-address" name="email" required placeholder="EMAIL ADDRESS"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="chevron-up" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                </div>
-                
-                <div class="relative">
-                    <input type="password" id="create-password" name="create_password" required placeholder="CREATE PASSWORD"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="heart" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                </div>
-                
-                <div class="relative">
-                    <input type="password" id="confirm-password" name="confirm_password" required placeholder="CONFIRM PASSWORD"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                </div>
-
-                <div class="relative">
-                    <input type="tel" id="contact-number" name="contact_number" required placeholder="CONTACT NUMBER"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="phone" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                    <p class="text-xs text-center text-gray-400 mt-2">Mandatory for SMS notifications</p>
-                </div>
-
-                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
-                    SIGN UP & START TRIAL
-                </button>
-            </form>
-
-            <div class="text-center mt-6">
-                <a href="saloon_owner_login.html" class="text-gray-400 text-sm hover:text-white transition duration-200">
-                    Already have an account? <span class="underline">Log In</span>
-                </a>
-            </div>
-
-        </main>
+    function showPaymentInfoPopup(fee, easypesa, jazzcash, whatsapp) {
+        document.getElementById('monthly-fee').innerText = `Rs ${fee}/month`;
+        document.getElementById('easypesa-details').innerText = easypesa;
+        document.getElementById('jazzcash-details').innerText = jazzcash;
         
-    </div>
+        // This is a complex action: opening WhatsApp chat.
+        // You can add a button here to link to the WhatsApp number:
+        // const whatsappLink = `https://wa.me/${whatsapp.replace('+', '')}?text=${encodeURIComponent('Payment screenshot for ASAMS subscription.')}`;
+        
+        document.getElementById('payment-modal').classList.add('flex');
+        document.getElementById('payment-modal').classList.remove('hidden');
+    }
 
-    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
-        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
-                HOME
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
-                APPOINTMENTS
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="store" class="w-5 h-5 mb-1"></i>
-                SALOONS
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
-                REPORTS
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="more-horizontal" class="w-5 h-5 mb-1"></i>
-                MORE
-            </a>
-        </nav>
-    </footer>
+    document.getElementById('signup-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const ownerName = document.getElementById('owner-name').value;
+        const saloonName = document.getElementById('saloon-name').value;
+        const address = document.getElementById('address').value;
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('create-password').value;
+        const contactNumber = document.getElementById('contact-number').value; 
+        
+        let adminSettings = {};
+        
+        // 1. Fetch Admin Settings
+        db.collection('settings').doc('admin').get()
+            .then(doc => {
+                if (!doc.exists) {
+                    throw new Error("Admin settings not configured. Please contact support.");
+                }
+                adminSettings = doc.data();
 
+                // 2. Create User in Firebase Auth
+                return auth.createUserWithEmailAndPassword(email, password);
+            })
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // 3. Save Application to Firestore (status: 'Pending')
+                return db.collection('applications').doc(user.uid).set({
+                    uid: user.uid,
+                    ownerName: ownerName,
+                    saloonName: saloonName,
+                    address: address,
+                    email: email,
+                    contactNumber: contactNumber,
+                    status: 'Pending', 
+                    logoUrl: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+            })
+            .then(() => {
+                // 4. Send SMS Notification to Saloon Owner
+                const ownerSmsBody = `Dear Saloon Owner, Your request for ASAMS account has been received, your application is being reviewed by the Master Admin. Thanks for using ASAMS Service. please do not reply to this message.`;
+                sendSmsFunction({ to: contactNumber, body: ownerSmsBody });
+                
+                // 5. Send SMS Notification to Master Admin
+                if (adminSettings.adminContactNumber) {
+                    const adminSmsBody = `Dear Admin, ${ownerName} (${saloonName}) has applied for ASAMS account. Please review and approve the application.`;
+                    sendSmsFunction({ to: adminSettings.adminContactNumber, body: adminSmsBody });
+                }
+
+                // 6. Show Payment Details Pop-up
+                showPaymentInfoPopup(
+                    adminSettings.subscriptionFee || 'N/A', 
+                    adminSettings.easyPesaDetails || 'N/A (Please set in Admin Panel)', 
+                    adminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)',
+                    adminSettings.whatsappNumber || ''
+                );
+            })
+            .catch((error) => {
+                alert(`Error: ${error.message}. Please check console.`);
+            });
+    });
+
+    lucide.createIcons();
+</script>
 </body>
 </html>

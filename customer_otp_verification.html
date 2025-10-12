@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Verify OTP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
+        .btn-primary { background-color: var(--accent-blue); color: white; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;}
+    </style>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen flex flex-col justify-center">
+
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-white">Verify Your Number</h1>
+            <p class="text-sm text-gray-400 mt-2">Enter the 6-digit OTP sent to your phone number.</p>
+        </header>
+
+        <main>
+            <form id="otp-form" class="space-y-4">
+                <input type="text" id="otp-input" placeholder="------" maxlength="6" class="input-style w-full" required>
+                
+                <button type="submit" id="verify-otp-button" class="w-full p-3 rounded-lg uppercase font-bold btn-primary">
+                    VERIFY & COMPLETE REGISTRATION
+                </button>
+            </form>
+            <p id="error-message" class="text-red-400 text-center mt-4 hidden">Invalid OTP. Please try again.</p>
+        </main>
+    </div>
+
+<script>
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = app.auth();
+    const db = app.firestore();
+    
+    // Retrieve confirmationResult and user details from session storage
+    const confirmationResult = window.confirmationResult;
+    const tempUserDetails = JSON.parse(sessionStorage.getItem('tempUserDetails'));
+
+    // If data is missing, redirect back
+    if (!confirmationResult || !tempUserDetails) {
+        alert("Session expired or data missing. Please sign up again.");
+        window.location.href = 'customer_signup.html';
+    }
+
+    document.getElementById('otp-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const otpCode = document.getElementById('otp-input').value;
+        const errorMessage = document.getElementById('error-message');
+        
+        errorMessage.classList.add('hidden');
+        document.getElementById('verify-otp-button').innerText = 'VERIFYING...';
+        document.getElementById('verify-otp-button').disabled = true;
+
+        // 1. Confirm the OTP
+        confirmationResult.confirm(otpCode)
+            .then((result) => {
+                // User is now signed in via phone number (UserCredential)
+                const user = result.user;
+                
+                // 2. Create the final account using Email/Password credentials (as required by previous steps)
+                return user.updateEmail(tempUserDetails.email)
+                    .then(() => user.updatePassword(tempUserDetails.password))
+                    .then(() => user);
+            })
+            .then((user) => {
+                // 3. Save additional user details to Firestore
+                return db.collection('customers').doc(user.uid).set({
+                    uid: user.uid,
+                    fullName: tempUserDetails.fullName,
+                    email: tempUserDetails.email,
+                    contactNumber: tempUserDetails.contactNumber,
+                    role: 'customer',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                // 4. Cleanup and Redirect
+                sessionStorage.removeItem('tempUserDetails');
+                alert("Registration successful! You are now logged in.");
+                window.location.href = 'customer_dashboard.html';
+            })
+            .catch((error) => {
+                errorMessage.innerText = `Verification failed. ${error.message}`;
+                errorMessage.classList.remove('hidden');
+                document.getElementById('verify-otp-button').innerText = 'VERIFY CODE';
+                document.getElementById('verify-otp-button').disabled = false;
+                
+                // NOTE: If the process fails after phone verification, the user remains signed in via phone number.
+                // The user must manually log out or the system must handle email/password linking errors.
+            });
+    });
+
+    lucide.createIcons();
+</script>
+</body>
+</html>

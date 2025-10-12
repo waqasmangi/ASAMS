@@ -6,204 +6,108 @@
     <title>ASAMS - Customer Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
+        .btn-primary { background-color: var(--accent-blue); color: white; transition: background-color 0.2s; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; }
+    </style>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-<script src="firebase-config.js"></script>
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-white">ASAMS Customer Sign Up</h1>
+            <p class="text-sm text-gray-400 mt-2">Enter your details and verify your phone number via OTP.</p>
+        </header>
+
+        <main>
+            <form id="signup-form" class="space-y-4">
+                <input type="text" id="full-name" placeholder="Full Name" class="input-style w-full" required>
+                <input type="email" id="email-address" placeholder="Email Address" class="input-style w-full" required>
+                <input type="password" id="create-password" placeholder="Create Password" class="input-style w-full" required>
+                <input type="tel" id="contact-number" placeholder="Phone Number (+92XXXXXXXXXX)" class="input-style w-full" pattern="^\+92\d{10}$" title="Must be in +92xxxxxxxxxx format" required>
+                
+                <div id="recaptcha-container"></div>
+                
+                <button type="submit" id="send-otp-button" class="w-full p-3 rounded-lg uppercase font-bold btn-primary">
+                    SEND OTP
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <a href="customer_login.html" class="text-gray-400 text-sm hover:text-white">Already registered? Log In</a>
+            </div>
+        </main>
+    </div>
 
 <script>
-    // Initialize Firebase using the config object from firebase-config.js
     const app = firebase.initializeApp(firebaseConfig);
     const auth = app.auth();
     const db = app.firestore();
-    const functions = app.functions('us-central1'); // Use the correct region if different
-</script>
-
-    <style>
-        /* CSS Variables for Branding */
-        :root {
-            --dark-navy: #1C2431;
-            --gold: #D4AF37;
-            --darker-bg: #151C25; 
-        }
-
-        /* Custom Gold Gradient Button Class */
-        .gold-gradient-button {
-            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
-            color: var(--darker-bg);
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Input Styling */
-        .custom-input {
-            background-color: var(--dark-navy); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 1rem;
-            border-radius: 9999px; /* Pill-shaped */
-            font-size: 0.875rem;
-        }
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
-        }
-        .font-inter {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
-</head>
-
-<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
-
-    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
-
-        <header class="text-center py-6">
-            <div class="flex flex-col items-center justify-center">
-                <div class="flex items-center space-x-2 text-white">
-                    <div class="relative">
-                        <i data-lucide="scissors" class="w-10 h-10" style="color: var(--gold);"></i>
-                        <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-cinzel text-xs" style="color: var(--darker-bg);">AS</span>
-                    </div>
-                    <div class="flex flex-col items-start">
-                        <span class="font-cinzel text-xl tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
-                        <span class="text-xs tracking-wider uppercase" style="color: #A0AEC0;">APPOINTMENT SYSTEM</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <main class="bg-gray-800 p-6 rounded-xl shadow-2xl flex-grow" style="background-color: var(--darker-bg);">
-            
-            <h1 class="text-2xl font-bold text-white text-center mb-6 font-cinzel tracking-wider">
-                CREATE YOUR ACCOUNT
-            </h1>
-
-            <form action="#" method="POST" class="space-y-4">
-                
-                <div class="relative">
-                    <input type="text" id="full-name" name="full_name" required placeholder="YOUR FULL NAME"
-                        class="w-full custom-input"
-                    >
-                </div>
-
-                <div class="relative">
-                    <input type="email" id="email-address" name="email" required placeholder="EMAIL ADDRESS"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="chevron-up" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                </div>
-                
-                <div class="relative">
-                    <input type="password" id="create-password" name="create_password" required placeholder="CREATE PASSWORD"
-                        class="w-full custom-input"
-                    >
-                </div>
-                
-                <div class="relative">
-                    <input type="password" id="confirm-password" name="confirm_password" required placeholder="CONFIRM PASSWORD"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                </div>
-
-                <div class="relative">
-                    <input type="tel" id="contact-number" name="contact_number" required placeholder="CONTACT NUMBER"
-                        class="w-full custom-input"
-                    >
-                    <i data-lucide="phone" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style="color: var(--gold);"></i>
-                    <p class="text-xs text-center text-gray-400 mt-2">Mandatory for SMS notifications</p> 
-                </div>
-
-                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
-                    SIGN UP
-                </button>
-            </form>
-
-            <div class="text-center mt-6">
-                <a href="customer_login.html" class="text-gray-400 text-sm hover:text-white transition duration-200">
-                    Already have an account? <span class="underline">Log In</span>
-                </a>
-            </div>
-
-        </main>
-        
-    </div>
-
-    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
-        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
-            <a href="#" class="flex flex-col items-center" style="color: var(--gold);">
-                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
-                HOME
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
-                APPOINTMENTS
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
-                PROFILE
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
-                MESSAGES
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="star" class="w-5 h-5 mb-1"></i>
-                REVIEWS
-            </a>
-        </nav>
-    </footer>
-<script>
-    // Get the form and button reference
-    const signupForm = document.querySelector('form');
     
-    signupForm.addEventListener('submit', (e) => {
-        e.preventDefault(); // Prevent default form submission
-
-        const fullName = document.getElementById('full-name').value;
-        const email = document.getElementById('email-address').value;
-        const password = document.getElementById('create-password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        const contactNumber = document.getElementById('contact-number').value;
-
-        // Simple validation
-        if (password !== confirmPassword) {
-            alert("Passwords do not match.");
-            return;
+    // Global variable to store necessary details before OTP verification
+    let userDetails = {};
+    
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // If user somehow gets here while logged in, redirect
+            window.location.href = 'customer_dashboard.html'; 
         }
-        if (!contactNumber) {
-            alert("Contact number is mandatory for SMS notifications.");
-            return;
-        }
+    });
 
-        // 1. Create User in Firebase Authentication
-        auth.createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
+    // 1. Initialize ReCAPTCHA Verifier
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+            // reCAPTCHA solved automatically after the first user interaction
+        },
+        'expired-callback': () => {
+            alert("reCAPTCHA expired. Please try again.");
+        }
+    });
+
+
+    document.getElementById('signup-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        userDetails.fullName = document.getElementById('full-name').value;
+        userDetails.email = document.getElementById('email-address').value;
+        userDetails.password = document.getElementById('create-password').value;
+        userDetails.contactNumber = document.getElementById('contact-number').value; 
+        
+        const contactNumber = userDetails.contactNumber;
+
+        // Ensure ReCAPTCHA is fully rendered before sending OTP
+        const recaptcha = window.recaptchaVerifier;
+
+        document.getElementById('send-otp-button').innerText = 'SENDING...';
+        document.getElementById('send-otp-button').disabled = true;
+
+        // 2. Send the OTP via Firebase Phone Auth
+        auth.signInWithPhoneNumber(contactNumber, recaptcha)
+            .then((confirmationResult) => {
+                window.confirmationResult = confirmationResult;
                 
-                // 2. Save additional user details to Firestore
-                return db.collection('customers').doc(user.uid).set({
-                    uid: user.uid,
-                    fullName: fullName,
-                    email: email,
-                    contactNumber: contactNumber,
-                    role: 'customer', // Define user role
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            })
-            .then(() => {
-                alert("Account created successfully! Redirecting to dashboard.");
-                // Redirect to the customer dashboard
-                window.location.href = 'customer_dashboard.html'; 
+                // Store temporary user details in local session
+                sessionStorage.setItem('tempUserDetails', JSON.stringify(userDetails));
+
+                // Redirect to the dedicated OTP verification page
+                alert("OTP sent to your number. Redirecting for verification.");
+                window.location.href = 'customer_otp_verification.html'; 
             })
             .catch((error) => {
-                alert(`Error during sign up: ${error.message}`);
+                alert(`OTP sending failed: ${error.message}`);
+                document.getElementById('send-otp-button').innerText = 'SEND OTP';
+                document.getElementById('send-otp-button').disabled = false;
             });
     });
+
+    lucide.createIcons();
 </script>
 </body>
 </html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Subscription</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        :root { --primary-dark: #1F2937; --accent-green: #10B981; --accent-red: #EF4444; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: white; padding: 0.75rem; border-radius: 0.375rem; }
+    </style>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
+        
+        <header class="mb-8 border-b border-gray-700 pb-4">
+            <h1 class="text-2xl font-bold text-white">Subscription & Payment</h1>
+            <p id="saloon-name-display" class="text-sm text-gray-400 mt-1">Saloon: Loading...</p>
+        </header>
+
+        <main class="space-y-6">
+            
+            <div id="status-card" class="p-4 rounded-lg flex items-center justify-between" style="background-color: #2D3748;">
+                <div>
+                    <h3 class="font-bold text-lg">Current Status: <span id="subscription-status" class="text-yellow-400">Loading...</span></h3>
+                    <p id="expiry-date" class="text-sm text-gray-300"></p>
+                </div>
+                <i data-lucide="award" class="w-8 h-8 text-yellow-400"></i>
+            </div>
+
+            <div id="payment-block" class="p-4 rounded-lg border-2 border-green-500 space-y-4 hidden">
+                <h3 class="font-bold text-xl text-green-400">Renew Subscription: <span id="monthly-fee-display"></span></h3>
+                <p class="text-sm text-gray-300">Copy details below, pay the fee, and send the screenshot to Admin's WhatsApp number to continue service.</p>
+                
+                <div class="p-3 rounded-lg bg-gray-700">
+                    <p class="font-semibold text-white">EasyPesa:</p>
+                    <pre id="easypesa-details-sub" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                    <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('easypesa-details-sub')">
+                        <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
+                    </button>
+                </div>
+                
+                <div class="p-3 rounded-lg bg-gray-700">
+                    <p class="font-semibold text-white">JazzCash:</p>
+                    <pre id="jazzcash-details-sub" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                    <button class="text-xs text-blue-300 mt-1 flex items-center" onclick="copyPaymentDetails('jazzcash-details-sub')">
+                        <i data-lucide="copy" class="w-3 h-3 mr-1"></i> Copy Details
+                    </button>
+                </div>
+                
+                <a id="whatsapp-share-link" target="_blank" class="w-full p-3 rounded-lg uppercase font-bold flex items-center justify-center bg-green-600 hover:bg-green-700 mt-4">
+                    <i data-lucide="send" class="w-5 h-5 mr-2"></i> SHARE PAYMENT SCREENSHOT
+                </a>
+            </div>
+            
+        </main>
+    </div>
+
+<script>
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = app.auth();
+    const db = app.firestore();
+    let adminSettings = {};
+
+    function copyPaymentDetails(elementId) {
+        const textToCopy = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert('Payment details copied!');
+        });
+    }
+
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = 'saloon_owner_login.html';
+            return;
+        }
+
+        const uid = user.uid;
+        
+        // 1. Fetch Admin Settings for Payment Info
+        db.collection('settings').doc('admin').get().then(doc => {
+            if (doc.exists) {
+                adminSettings = doc.data();
+            }
+            
+            // 2. Fetch Saloon Application Status
+            return db.collection('applications').doc(uid).get();
+        }).then(doc => {
+            if (!doc.exists) {
+                alert("Saloon record not found. Access denied.");
+                auth.signOut();
+                return;
+            }
+
+            const data = doc.data();
+            const now = new Date();
+            const trialEnd = data.trialEnd ? data.trialEnd.toDate() : null;
+            const statusDisplay = document.getElementById('subscription-status');
+            const expiryDisplay = document.getElementById('expiry-date');
+            const paymentBlock = document.getElementById('payment-block');
+
+            document.getElementById('saloon-name-display').innerText = `Saloon: ${data.saloonName}`;
+            
+            // Check status and trial expiry
+            if (data.status === 'Pending') {
+                statusDisplay.innerText = 'Pending Approval';
+                statusDisplay.className = 'text-yellow-500';
+                expiryDisplay.innerText = 'Awaiting Master Admin approval.';
+            } else if (trialEnd && now < trialEnd) {
+                statusDisplay.innerText = '7-DAY FREE TRIAL';
+                statusDisplay.className = 'text-green-500';
+                expiryDisplay.innerText = `Trial ends on: ${trialEnd.toDateString()}`;
+                paymentBlock.classList.remove('hidden'); // Show payment details even during trial
+            } else if (trialEnd && now >= trialEnd) {
+                statusDisplay.innerText = 'EXPIRED';
+                statusDisplay.className = 'text-red-500';
+                expiryDisplay.innerText = 'Account is expired. Please renew immediately.';
+                paymentBlock.classList.remove('hidden'); // Show payment details for renewal
+            } else {
+                statusDisplay.innerText = 'ACTIVE (Paid)'; // Placeholder for actual subscription logic
+                statusDisplay.className = 'text-blue-400';
+            }
+
+            // Populate Payment Block details
+            document.getElementById('monthly-fee-display').innerText = `Rs ${adminSettings.subscriptionFee || 'N/A'}/month`;
+            document.getElementById('easypesa-details-sub').innerText = adminSettings.easyPesaDetails || 'Not Set';
+            document.getElementById('jazzcash-details-sub').innerText = adminSettings.jazzCashDetails || 'Not Set';
+            
+            // WhatsApp Link Setup
+            const whatsappMsg = encodeURIComponent(`ASAMS Payment Screenshot for Saloon: ${data.saloonName}. Please review and reactivate my account.`);
+            document.getElementById('whatsapp-share-link').href = `https://wa.me/${adminSettings.whatsappNumber.replace('+', '')}?text=${whatsappMsg}`;
+            
+        }).catch(error => {
+            console.error("Subscription load error:", error);
+            alert("Error loading subscription status. Please try again.");
+            auth.signOut();
+        });
+    });
+
+    lucide.createIcons();
+</script>
+</body>
+</html>
