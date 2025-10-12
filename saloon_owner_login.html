@@ -153,6 +153,59 @@
             </a>
         </nav>
     </footer>
+<script>
+    const loginForm = document.querySelector('form');
+    
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
 
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('password').value;
+
+        // 1. Authenticate user via Firebase Auth
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // 2. Retrieve Saloon/Subscription data from Firestore
+                return db.collection('saloons').doc(user.uid).get();
+            })
+            .then((doc) => {
+                if (!doc.exists) {
+                    // This should only happen if the Master Admin hasn't created the account yet
+                    alert("Saloon account data not found. Access denied.");
+                    auth.signOut();
+                    return;
+                }
+
+                const saloonData = doc.data();
+                const now = new Date();
+                
+                // Convert Firestore Timestamp to JavaScript Date object
+                const trialEndDate = saloonData.trialEnd.toDate(); 
+
+                // Check if the trial has expired
+                if (saloonData.status === 'Active' || now <= trialEndDate) {
+                    
+                    // Trial is ongoing or subscription is active
+                    alert(`Welcome back, Owner of ${saloonData.name}! Trial ends: ${trialEndDate.toDateString()}`);
+                    window.location.href = 'saloon_owner_dashboard.html';
+                
+                } else {
+                    // Trial has expired and status is not manually set to 'Active'
+                    alert(`Access Denied: Your free trial expired on ${trialEndDate.toDateString()}. Please pay the subscription fee to continue.`);
+                    auth.signOut(); // Block access by signing them out
+                    
+                    // Redirect to a payment/recharge page (you would create this page)
+                    // window.location.href = 'saloon_owner_recharge.html'; 
+                }
+            })
+            .catch((error) => {
+                alert(`Login Failed: ${error.message}`);
+                // Ensure user is signed out in case of incomplete login
+                auth.signOut(); 
+            });
+    });
+</script>
 </body>
 </html>
