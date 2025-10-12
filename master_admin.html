@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Master Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>Master Admin Dashboard</h1>
+        <div class="user-info">
+            <span id="admin-name">Admin User</span>
+            <button onclick="logout()" class="primary-btn">Logout</button>
+        </div>
+    </header>
+
+    <div class="dashboard-content">
+        <h2>Store Owner Management</h2>
+        <p>This is where the Master Admin creates new Store Owner accounts and manages their 7-day trial status and payments.</p>
+
+        <div class="card">
+            <h3>Create New Store Owner (7-Day Trial)</h3>
+            <form id="create-owner-form">
+                <input type="email" id="owner-email" placeholder="Owner Email" required>
+                <input type="password" id="owner-password" placeholder="Initial Password" required>
+                <input type="text" id="owner-shop-name" placeholder="Saloon Name" required>
+                <button type="submit" class="primary-btn">Create Owner & Start Trial</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Active/Trial Owners</h3>
+            <p>List of all owners, their status (trial, active, expired), and buttons to activate payment or apply discount codes.</p>
+            </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Specific logic for Master Admin page
+        const createOwnerForm = document.getElementById('create-owner-form');
+        createOwnerForm?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('owner-email').value;
+            const password = document.getElementById('owner-password').value;
+            const shopName = document.getElementById('owner-shop-name').value;
+
+            // This account creation needs to be done securely via a Cloud Function, 
+            // as creating users on the client side gives up admin privileges.
+            alert('Calling secure Cloud Function to create owner, set a 7-day trial, and send SMS via Twilio...');
+
+            // --- Server-side Logic Placeholder ---
+            // CALL_CLOUD_FUNCTION_FOR_ADMIN_CREATE_OWNER({email, password, shopName});
+        });
+    </script>
+</body>
+</html>

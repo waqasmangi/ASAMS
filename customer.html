@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Customer</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>Customer Appointment Booking</h1>
+        <div class="user-info">
+            <span id="customer-name">Guest/Customer Name</span>
+            <button onclick="logout()" class="primary-btn" id="logout-btn">Logout</button>
+        </div>
+    </header>
+
+    <div class="dashboard-content">
+        <h2>Find Saloons Nearby</h2>
+        <p>Enter your location (or use a placeholder) to find saloons within a reasonable radius.</p>
+
+        <div class="card">
+            <input type="text" id="current-location-input" placeholder="Enter your city or pin code">
+            <button class="primary-btn">Search Nearby</button>
+        </div>
+
+        <div class="card">
+            <h3>Available Saloons (Nearby)</h3>
+            <div id="saloon-list">
+                <div class="saloon-card card">
+                    <h4>Example Saloon: The Style Hub</h4>
+                    <p>Rating: ⭐⭐⭐⭐⭐</p>
+                    <button class="primary-btn book-btn">Book Appointment</button>
+                </div>
+            </div>
+        </div>
+
+        <h2>Book Appointment (Mimicking image 3)</h2>
+        <div class="card appointment-booking-ui hidden">
+            <h3>Selected Saloon: The Style Hub</h3>
+            <p>Selected Date: <span id="selected-date">Oct 15, 2025</span></p>
+            <p>Selected Service: Haircut & Style</p>
+            <p>Selected Stylist: Sarah</p>
+            <p>Selected Time: 10:00 AM</p>
+            <button class="primary-btn" id="confirm-booking-btn">CONFIRM BOOKING</button>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Specific logic for Customer page
+        document.getElementById('confirm-booking-btn')?.addEventListener('click', () => {
+            alert('Booking confirmed! Calling secure Cloud Function to send SMS notifications to Customer and Store Owner via Twilio...');
+
+            // --- Server-side Logic Placeholder ---
+            // CALL_CLOUD_FUNCTION_TO_HANDLE_BOOKING({saloonId, customerId, date, time});
+            // The Cloud Function will:
+            // 1. Save appointment to Firestore.
+            // 2. Use Twilio to send SMS to customer.
+            // 3. Use Twilio to send SMS to store owner.
+        });
+        
+        // Hide logout button for guests
+        if (!sessionStorage.getItem('userRole')) {
+            document.getElementById('logout-btn').classList.add('hidden');
+            document.getElementById('customer-name').textContent = 'Guest';
+        }
+    </script>
+</body>
+</html>

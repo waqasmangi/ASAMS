@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAMS - Store Owner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>Saloon Owner Dashboard</h1>
+        <div class="user-info">
+            <span id="owner-name">Saloon Owner Name</span>
+            <button onclick="logout()" class="primary-btn">Logout</button>
+        </div>
+    </header>
+
+    <div class="dashboard-content">
+        <h2>Saloon & Service Management</h2>
+
+        <div class="card">
+            <h3>Saloon Information (GPS Location)</h3>
+            <p>Saloon owners can update their shop details and use a "Get Current Location" button to save their **GPS coordinates** to Firestore.</p>
+            <button id="get-location-btn" class="primary-btn">Get & Save GPS Location</button>
+        </div>
+
+        <div class="card">
+            <h3>Appointments</h3>
+            <p>View upcoming appointments, which triggers an **SMS notification** to the owner and customer upon booking.</p>
+            <div id="appointment-list">Loading appointments...</div>
+        </div>
+
+        <div class="card">
+            <h3>Services & Pricing</h3>
+            <p>Owners can **add, edit, or delete services** and their prices, including setting **special discounts** for customers.</p>
+            </div>
+        
+        <div class="card">
+            <h3>Customer Discount Codes</h3>
+            <p>Owners can **create discount codes** (e.g., 'SUMMER10' for 10% off) for their customers.</p>
+            </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Specific logic for Store Owner page
+        document.getElementById('get-location-btn')?.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        alert(`Current Location: Lat ${lat}, Lon ${lon}. Saving to Firestore...`);
+                        // Logic to save these coordinates to the Saloon's Firestore document
+                        // db.collection('saloons').doc(ownerId).update({ location: new firebase.firestore.GeoPoint(lat, lon) });
+                    },
+                    (error) => {
+                        alert(`Error getting location: ${error.message}`);
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
+</body>
+</html>
