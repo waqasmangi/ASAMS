@@ -12,6 +12,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+        const functions = app.functions('us-central1');
+        const sendSmsFunction = functions.httpsCallable('sendSms');
+    </script>
     <style>
         :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
         .btn-primary { background-color: var(--accent-blue); color: white; transition: background-color 0.2s; }
@@ -85,12 +92,6 @@
     </div>
 
 <script>
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-    const functions = app.functions('us-central1');
-    const sendSmsFunction = functions.httpsCallable('sendSms');
-
     function copyPaymentDetails(elementId) {
         const textToCopy = document.getElementById(elementId).innerText;
         navigator.clipboard.writeText(textToCopy).then(() => {
@@ -98,14 +99,10 @@
         });
     }
 
-    function showPaymentInfoPopup(fee, easypesa, jazzcash, whatsapp) {
+    function showPaymentInfoPopup(fee, easypesa, jazzcash) {
         document.getElementById('monthly-fee').innerText = `Rs ${fee}/month`;
         document.getElementById('easypesa-details').innerText = easypesa;
         document.getElementById('jazzcash-details').innerText = jazzcash;
-        
-        // This is a complex action: opening WhatsApp chat.
-        // You can add a button here to link to the WhatsApp number:
-        // const whatsappLink = `https://wa.me/${whatsapp.replace('+', '')}?text=${encodeURIComponent('Payment screenshot for ASAMS subscription.')}`;
         
         document.getElementById('payment-modal').classList.add('flex');
         document.getElementById('payment-modal').classList.remove('hidden');
@@ -165,8 +162,7 @@
                 showPaymentInfoPopup(
                     adminSettings.subscriptionFee || 'N/A', 
                     adminSettings.easyPesaDetails || 'N/A (Please set in Admin Panel)', 
-                    adminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)',
-                    adminSettings.whatsappNumber || ''
+                    adminSettings.jazzCashDetails || 'N/A (Please set in Admin Panel)'
                 );
             })
             .catch((error) => {

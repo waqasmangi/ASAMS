@@ -12,66 +12,68 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+    </script>
     <style>
-        :root { --primary-dark: #1F2937; --accent-blue: #3B82F6; --text-light: #F9FAFB; }
-        .btn-primary { background-color: var(--accent-blue); color: white; transition: background-color 0.2s; }
-        .input-style { background-color: #374151; border: 1px solid #4B5563; color: var(--text-light); padding: 0.75rem; border-radius: 0.375rem; }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: #F9FAFB; padding: 0.75rem; border-radius: 0.375rem; }
     </style>
 </head>
 <body class="bg-gray-900 font-sans text-gray-100">
     <div class="max-w-xl mx-auto p-6 bg-gray-800 shadow-xl min-h-screen">
 
-        <header class="mb-8 border-b border-gray-700 pb-4">
-            <h1 class="text-2xl font-bold text-white">ASAMS Admin Control</h1>
-            <p class="text-sm text-gray-400">Manage System Defaults & Payment Endpoints</p>
+        <header class="mb-8 border-b border-gray-700 pb-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-white">System Settings</h1>
+                <p class="text-sm text-gray-400">Set dynamic fees and payment details.</p>
+            </div>
+            <a href="master_admin_dashboard.html" class="text-sm text-yellow-400 hover:text-yellow-300">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-1"></i> Dashboard
+            </a>
         </header>
 
         <main>
             <form id="settings-form" class="space-y-6">
                 
-                <div class="p-4 bg-gray-700 rounded-lg">
-                    <h3 class="text-lg font-bold mb-3 text-yellow-400">Subscription & Trial</h3>
-                    <label class="block text-sm font-medium mb-1">Monthly Subscription Fee (PKR)</label>
+                <div class="p-4 bg-gray-700 rounded-lg space-y-3">
+                    <h3 class="text-lg font-bold text-yellow-400">Subscription & Contact</h3>
+                    
+                    <label class="block text-sm font-medium">Monthly Subscription Fee (PKR)</label>
                     <input type="number" id="subscription-fee-input" placeholder="e.g., 499" class="input-style w-full" required>
-                </div>
 
-                <div class="p-4 bg-gray-700 rounded-lg">
-                    <h3 class="text-lg font-bold mb-3 text-blue-400">Admin Contact Info (For Notifications & Payment)</h3>
+                    <label class="block text-sm font-medium pt-2">Admin SMS Number (+92 Format)</label>
+                    <input type="tel" id="admin-sms-number-input" placeholder="+923001234567" class="input-style w-full" required>
                     
-                    <label class="block text-sm font-medium mb-1">Admin SMS Number (+92 Format for Notifications)</label>
-                    <input type="tel" id="admin-sms-number-input" placeholder="+923001234567" class="input-style w-full mb-3" required>
-                    
-                    <label class="block text-sm font-medium mb-1">Admin WhatsApp Number (For Screenshot Sharing)</label>
+                    <label class="block text-sm font-medium pt-2">Admin WhatsApp Number (For Screenshots)</label>
                     <input type="tel" id="admin-whatsapp-number-input" placeholder="+923001234567" class="input-style w-full" required>
                 </div>
 
-                <div class="p-4 bg-gray-700 rounded-lg">
-                    <h3 class="text-lg font-bold mb-3 text-green-400">Saloon Owner Payment Methods</h3>
+                <div class="p-4 bg-gray-700 rounded-lg space-y-3">
+                    <h3 class="text-lg font-bold text-green-400">Payment Accounts (Visible to Owners)</h3>
                     
-                    <label class="block text-sm font-medium mb-1">EasyPesa Details (Name & A/C)</label>
-                    <textarea id="easypesa-details-input" rows="3" placeholder="Account Name: Waqas Mangi&#10;Account Number: 0345..." class="input-style w-full h-auto" required></textarea>
+                    <label class="block text-sm font-medium">EasyPesa Details (Name & A/C)</label>
+                    <textarea id="easypesa-details-input" rows="3" placeholder="Account Name: XYZ&#10;Account Number: 0345..." class="input-style w-full h-auto" required></textarea>
 
-                    <label class="block text-sm font-medium mt-4 mb-1">JazzCash Details (Name & A/C)</label>
-                    <textarea id="jazzcash-details-input" rows="3" placeholder="Account Name: Waqas Mangi&#10;Account Number: 0300..." class="input-style w-full h-auto" required></textarea>
+                    <label class="block text-sm font-medium">JazzCash Details (Name & A/C)</label>
+                    <textarea id="jazzcash-details-input" rows="3" placeholder="Account Name: ABC&#10;Account Number: 0300..." class="input-style w-full h-auto" required></textarea>
                 </div>
 
-                <button type="submit" class="w-full p-3 rounded-lg uppercase font-bold btn-primary">
-                    <i data-lucide="save" class="w-5 h-5 inline mr-2"></i> SAVE ALL SETTINGS
+                <button type="submit" class="w-full p-3 rounded-lg uppercase font-bold bg-blue-600 hover:bg-blue-700 text-white">
+                    SAVE ALL SETTINGS
                 </button>
             </form>
         </main>
     </div>
 
 <script>
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-
+    const settingsForm = document.getElementById('settings-form');
+    // Load existing settings on page load
     auth.onAuthStateChanged(user => {
         if (!user || user.email !== 'waqasmangi.uk@gmail.com') {
-            window.location.href = 'master-admin-login.html';
+            window.location.href = 'master_admin_login.html';
         } else {
-            // Load existing settings on page load
             db.collection('settings').doc('admin').get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -85,22 +87,18 @@
         }
     });
 
-    document.getElementById('settings-form').addEventListener('submit', (e) => {
+    settingsForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        // Save logic (similar to previous step, but now working with the new inputs)
+        const data = {
+            subscriptionFee: document.getElementById('subscription-fee-input').value,
+            easyPesaDetails: document.getElementById('easypesa-details-input').value,
+            jazzCashDetails: document.getElementById('jazzcash-details-input').value,
+            adminContactNumber: document.getElementById('admin-sms-number-input').value,
+            whatsappNumber: document.getElementById('admin-whatsapp-number-input').value
+        };
 
-        const subscriptionFee = document.getElementById('subscription-fee-input').value;
-        const easyPesaDetails = document.getElementById('easypesa-details-input').value;
-        const jazzCashDetails = document.getElementById('jazzcash-details-input').value;
-        const adminContactNumber = document.getElementById('admin-sms-number-input').value;
-        const whatsappNumber = document.getElementById('admin-whatsapp-number-input').value;
-
-        db.collection('settings').doc('admin').set({
-            subscriptionFee: subscriptionFee,
-            easyPesaDetails: easyPesaDetails,
-            jazzCashDetails: jazzCashDetails,
-            adminContactNumber: adminContactNumber,
-            whatsappNumber: whatsappNumber
-        })
+        db.collection('settings').doc('admin').set(data)
         .then(() => {
             alert("Admin settings successfully saved!");
         })
@@ -108,6 +106,7 @@
             alert(`Error saving settings: ${error.message}`);
         });
     });
+    lucide.createIcons();
 </script>
 </body>
 </html>

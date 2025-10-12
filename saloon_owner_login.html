@@ -6,206 +6,89 @@
     <title>ASAMS - Saloon Owner Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-
-<script src="firebase-config.js"></script>
-
-<script>
-    // Initialize Firebase using the config object from firebase-config.js
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = app.firestore();
-    const functions = app.functions('us-central1'); // Use the correct region if different
-</script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+    </script>
     <style>
-        /* CSS Variables for Branding */
-        :root {
-            --dark-navy: #1C2431;
-            --gold: #D4AF37;
-            --darker-bg: #151C25; 
-        }
-
-        /* Custom Gold Gradient Button Class */
-        .gold-gradient-button {
-            background-image: linear-gradient(180deg, #E6C86C, var(--gold));
-            color: var(--darker-bg); /* Dark text on gold */
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        .gold-gradient-button:hover {
-            opacity: 0.9;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Input Styling */
-        .custom-input {
-            background-color: var(--dark-navy); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 1rem;
-            border-radius: 9999px; /* Pill-shaped */
-            font-size: 0.875rem;
-        }
-        .font-cinzel {
-            font-family: 'Cinzel', serif;
-        }
-        .font-inter {
-            font-family: 'Inter', sans-serif;
-        }
+        .input-style { background-color: #374151; border: 1px solid #4B5563; color: #F9FAFB; padding: 0.75rem; border-radius: 0.375rem; }
     </style>
 </head>
+<body class="bg-gray-900 font-sans text-gray-100">
+    <div class="max-w-md mx-auto p-6 bg-gray-800 shadow-xl min-h-screen flex flex-col justify-center">
 
-<body class="font-inter bg-gray-900 min-h-screen flex flex-col">
-
-    <div class="flex-grow max-w-sm mx-auto w-full p-4 sm:p-6 flex flex-col">
-
-        <header class="text-center py-6">
-            <div class="flex flex-col items-center justify-center">
-                <div class="flex items-center space-x-2 text-white">
-                    <div class="relative">
-                        <i data-lucide="scissors" class="w-10 h-10" style="color: var(--gold);"></i>
-                        <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-cinzel text-xs" style="color: var(--darker-bg);">AS</span>
-                    </div>
-                    <div class="flex flex-col items-start">
-                        <span class="font-cinzel text-xl tracking-widest leading-none" style="color: var(--gold);">ASAMS</span>
-                        <span class="text-xs tracking-wider uppercase" style="color: #A0AEC0;">OWNER PORTAL</span>
-                    </div>
-                </div>
-            </div>
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white">ASAMS Saloon Owner</h1>
+            <p class="text-sm text-gray-400 mt-2">Log in to manage your business.</p>
         </header>
 
-        <main class="bg-gray-800 p-6 rounded-xl shadow-2xl flex-grow" style="background-color: var(--darker-bg);">
+        <form id="owner-login-form" class="space-y-4">
+            <input type="email" id="email-address" placeholder="Email Address" class="input-style w-full" required>
+            <input type="password" id="password" placeholder="Password" class="input-style w-full" required>
             
-            <div class="text-center mb-6">
-                <span class="text-xs uppercase font-semibold tracking-wider px-3 py-1 rounded-full" style="background-color: var(--dark-navy); color: var(--gold);">
-                    OWNER PORTAL Login
-                </span>
-            </div>
-            
-            <h1 class="text-2xl font-bold text-white text-center mb-2 font-cinzel tracking-wider">
-                WELCOME BACK, OWNER!
-            </h1>
-            <p class="text-gray-400 text-center mb-8 text-sm">
-                Log in manage your business.
-            </p>
+            <button type="submit" class="w-full p-3 rounded-lg uppercase font-bold bg-yellow-500 text-gray-900 hover:bg-yellow-400">
+                LOG IN
+            </button>
+        </form>
 
-            <form action="#" method="POST" class="space-y-4">
-                
-                <div class="relative">
-                    <input type="email" id="email-address" name="email" required placeholder="EMAIL ADDRESS"
-                        class="w-full custom-input"
-                    >
-                </div>
-
-                <div class="relative">
-                    <input type="password" id="password" name="password" required placeholder="PASSWORD"
-                        class="w-full custom-input pr-12"
-                    >
-                    <i data-lucide="lock" class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style="color: var(--gold);"></i>
-                </div>
-
-                <button type="submit" class="w-full p-4 mt-6 rounded-full uppercase font-bold text-lg gold-gradient-button">
-                    LOG IN
-                </button>
-            </form>
-
-            <div class="flex justify-center space-x-4 mt-6 text-sm">
-                <a href="#" class="text-gray-400 hover:text-white transition duration-200">
-                    Forgot Password?
-                </a>
-                <span class="text-gray-600">|</span>
-                <a href="saloon_owner_signup.html" class="text-gray-400 hover:text-white transition duration-200">
-                    SIGN UP
-                </a>
-            </div>
-
-        </main>
-        
+        <div class="mt-4 text-center">
+            <a href="saloon_owner_signup.html" class="text-gray-400 text-sm hover:text-white">New user? Sign Up</a>
+        </div>
     </div>
 
-    <footer class="fixed bottom-0 left-0 right-0 p-3 shadow-top" style="background-color: var(--dark-navy);">
-        <nav class="max-w-md mx-auto flex justify-around items-center text-xs font-inter uppercase text-gray-400">
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
-                HOME
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="calendar-check" class="w-5 h-5 mb-1"></i>
-                APPOINTMENTS
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="users" class="w-5 h-5 mb-1"></i>
-                PROFILES
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
-                MESSAGES
-            </a>
-            <a href="#" class="flex flex-col items-center hover:text-white">
-                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1"></i>
-                REPORTS
-            </a>
-        </nav>
-    </footer>
 <script>
-    const loginForm = document.querySelector('form');
+    const loginForm = document.getElementById('owner-login-form');
     
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const email = document.getElementById('email-address').value;
         const password = document.getElementById('password').value;
 
-        // 1. Authenticate user via Firebase Auth
+        // 1. Authenticate user
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 const user = userCredential.user;
                 
-                // 2. Retrieve Saloon/Subscription data from Firestore
-                return db.collection('saloons').doc(user.uid).get();
+                // 2. Check application/subscription status
+                return db.collection('applications').doc(user.uid).get();
             })
             .then((doc) => {
                 if (!doc.exists) {
-                    // This should only happen if the Master Admin hasn't created the account yet
-                    alert("Saloon account data not found. Access denied.");
+                    alert("Account record not found. Access denied.");
                     auth.signOut();
                     return;
                 }
 
-                const saloonData = doc.data();
+                const data = doc.data();
                 const now = new Date();
                 
-                // Convert Firestore Timestamp to JavaScript Date object
-                const trialEndDate = saloonData.trialEnd.toDate(); 
-
-                // Check if the trial has expired
-                if (saloonData.status === 'Active' || now <= trialEndDate) {
-                    
-                    // Trial is ongoing or subscription is active
-                    alert(`Welcome back, Owner of ${saloonData.name}! Trial ends: ${trialEndDate.toDateString()}`);
-                    window.location.href = 'saloon_owner_dashboard.html';
-                
+                if (data.status === 'Pending') {
+                    alert("Your application is pending approval by the Master Admin. Please wait.");
+                    auth.signOut();
+                } else if (data.status === 'Approved' && data.trialEnd.toDate() < now) {
+                    alert(`Access Denied: Your trial expired on ${data.trialEnd.toDate().toDateString()}. Please renew your subscription.`);
+                    auth.signOut();
+                    // Redirect to subscription page
+                    window.location.href = 'saloon_owner_subscription.html';
                 } else {
-                    // Trial has expired and status is not manually set to 'Active'
-                    alert(`Access Denied: Your free trial expired on ${trialEndDate.toDateString()}. Please pay the subscription fee to continue.`);
-                    auth.signOut(); // Block access by signing them out
-                    
-                    // Redirect to a payment/recharge page (you would create this page)
-                    // window.location.href = 'saloon_owner_recharge.html'; 
+                    // Approved and Trial is active OR Status is Paid/Active
+                    alert("Login successful!");
+                    // First-time users need to set GPS location
+                    window.location.href = 'saloon_owner_gps_location.html';
                 }
             })
             .catch((error) => {
                 alert(`Login Failed: ${error.message}`);
-                // Ensure user is signed out in case of incomplete login
-                auth.signOut(); 
             });
     });
+    lucide.createIcons();
 </script>
 </body>
 </html>
