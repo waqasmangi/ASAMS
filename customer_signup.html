@@ -157,6 +157,53 @@
             </a>
         </nav>
     </footer>
+<script>
+    // Get the form and button reference
+    const signupForm = document.querySelector('form');
+    
+    signupForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Prevent default form submission
 
+        const fullName = document.getElementById('full-name').value;
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('create-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const contactNumber = document.getElementById('contact-number').value;
+
+        // Simple validation
+        if (password !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+        if (!contactNumber) {
+            alert("Contact number is mandatory for SMS notifications.");
+            return;
+        }
+
+        // 1. Create User in Firebase Authentication
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // 2. Save additional user details to Firestore
+                return db.collection('customers').doc(user.uid).set({
+                    uid: user.uid,
+                    fullName: fullName,
+                    email: email,
+                    contactNumber: contactNumber,
+                    role: 'customer', // Define user role
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                alert("Account created successfully! Redirecting to dashboard.");
+                // Redirect to the customer dashboard
+                window.location.href = 'customer_dashboard.html'; 
+            })
+            .catch((error) => {
+                alert(`Error during sign up: ${error.message}`);
+            });
+    });
+</script>
 </body>
 </html>

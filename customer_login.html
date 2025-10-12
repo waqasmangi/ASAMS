@@ -147,6 +147,26 @@
             </a>
         </nav>
     </footer>
+<script>
+    const loginForm = document.querySelector('form');
+    
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
 
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('password').value;
+
+        // Authenticate user
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
+                // Check user's role before redirecting (optional, but good practice)
+                // For simplicity here, we assume a successful login goes to the customer dashboard.
+                window.location.href = 'customer_dashboard.html'; 
+            })
+            .catch((error) => {
+                alert(`Login Failed: ${error.message}`);
+            });
+    });
+</script>
 </body>
 </html>
